@@ -43,8 +43,10 @@ $wpcli_block_before_invoke_6_5 = static function () {
 	}
 };
 
-// Register commands with appropriate version checks.
+// Register the namespace command for better help screens.
 WP_CLI::add_command( 'block', WP_CLI\Block\Block_Command::class );
+
+// Register commands with appropriate version checks.
 WP_CLI::add_command( 'block type', WP_CLI\Block\Block_Type_Command::class, [ 'before_invoke' => $wpcli_block_before_invoke_5_0 ] );
 WP_CLI::add_command( 'block pattern', WP_CLI\Block\Block_Pattern_Command::class, [ 'before_invoke' => $wpcli_block_before_invoke_5_5 ] );
 WP_CLI::add_command( 'block pattern-category', WP_CLI\Block\Block_Pattern_Category_Command::class, [ 'before_invoke' => $wpcli_block_before_invoke_5_5 ] );

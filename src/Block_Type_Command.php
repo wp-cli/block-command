@@ -262,32 +262,46 @@ class Block_Type_Command extends WP_CLI_Command {
 	private function block_type_to_array( $block_type ) {
 		return [
 			'name'                   => $block_type->name,
-			'title'                  => $block_type->title,
-			'description'            => $block_type->description,
-			'category'               => $block_type->category,
+			'title'                  => $this->get_block_type_property( $block_type, 'title' ),
+			'description'            => $this->get_block_type_property( $block_type, 'description' ),
+			'category'               => $this->get_block_type_property( $block_type, 'category' ),
 			'is_dynamic'             => $block_type->is_dynamic(),
-			'icon'                   => $block_type->icon,
-			'keywords'               => $block_type->keywords,
-			'parent'                 => $block_type->parent,
-			'ancestor'               => $block_type->ancestor,
-			'allowed_blocks'         => $block_type->allowed_blocks,
-			'supports'               => $block_type->supports,
-			'attributes'             => $block_type->attributes,
-			'provides_context'       => $block_type->provides_context,
-			'uses_context'           => $block_type->uses_context,
-			'block_hooks'            => $block_type->block_hooks,
-			'selectors'              => $block_type->selectors,
-			'styles'                 => $block_type->styles,
-			'example'                => $block_type->example,
-			'editor_script_handles'  => $block_type->editor_script_handles,
-			'script_handles'         => $block_type->script_handles,
-			'view_script_handles'    => $block_type->view_script_handles,
-			'view_script_module_ids' => $block_type->view_script_module_ids,
-			'editor_style_handles'   => $block_type->editor_style_handles,
-			'style_handles'          => $block_type->style_handles,
-			'view_style_handles'     => $block_type->view_style_handles,
-			'api_version'            => $block_type->api_version,
+			'icon'                   => $this->get_block_type_property( $block_type, 'icon' ),
+			'keywords'               => $this->get_block_type_property( $block_type, 'keywords' ),
+			'parent'                 => $this->get_block_type_property( $block_type, 'parent' ),
+			'ancestor'               => $this->get_block_type_property( $block_type, 'ancestor' ),
+			'allowed_blocks'         => $this->get_block_type_property( $block_type, 'allowed_blocks' ),
+			'supports'               => $this->get_block_type_property( $block_type, 'supports' ),
+			'attributes'             => $this->get_block_type_property( $block_type, 'attributes' ),
+			'provides_context'       => $this->get_block_type_property( $block_type, 'provides_context' ),
+			'uses_context'           => $this->get_block_type_property( $block_type, 'uses_context' ),
+			'block_hooks'            => $this->get_block_type_property( $block_type, 'block_hooks' ),
+			'selectors'              => $this->get_block_type_property( $block_type, 'selectors' ),
+			'styles'                 => $this->get_block_type_property( $block_type, 'styles' ),
+			'example'                => $this->get_block_type_property( $block_type, 'example' ),
+			'editor_script_handles'  => $this->get_block_type_property( $block_type, 'editor_script_handles' ),
+			'script_handles'         => $this->get_block_type_property( $block_type, 'script_handles' ),
+			'view_script_handles'    => $this->get_block_type_property( $block_type, 'view_script_handles' ),
+			'view_script_module_ids' => $this->get_block_type_property( $block_type, 'view_script_module_ids' ),
+			'editor_style_handles'   => $this->get_block_type_property( $block_type, 'editor_style_handles' ),
+			'style_handles'          => $this->get_block_type_property( $block_type, 'style_handles' ),
+			'view_style_handles'     => $this->get_block_type_property( $block_type, 'view_style_handles' ),
+			'api_version'            => $this->get_block_type_property( $block_type, 'api_version' ),
 		];
+	}
+
+	/**
+	 * Safely gets a property from a WP_Block_Type object.
+	 *
+	 * Some properties may not exist on all block types depending on WordPress
+	 * version or how the block was registered.
+	 *
+	 * @param WP_Block_Type $block_type Block type object.
+	 * @param string        $property   Property name.
+	 * @return mixed|null Property value or null if not set.
+	 */
+	private function get_block_type_property( $block_type, $property ) {
+		return isset( $block_type->$property ) ? $block_type->$property : null;
 	}
 
 	/**
