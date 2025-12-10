@@ -863,7 +863,7 @@ wp block template get <id> [--type=<type>] [--field=<field>] [--fields=<fields>]
 Exports a block template to a file.
 
 ~~~
-wp block template export <id> [--type=<type>] [--dir=<directory>] [--stdout]
+wp block template export <id> [--type=<type>] [--file=<file>] [--dir=<directory>] [--stdout]
 ~~~
 
 **OPTIONS**
@@ -880,8 +880,11 @@ wp block template export <id> [--type=<type>] [--dir=<directory>] [--stdout]
 		  - wp_template_part
 		---
 
+	[--file=<file>]
+		File path to export to. Parent directories will be created if needed.
+
 	[--dir=<directory>]
-		Directory to export to. Defaults to current directory.
+		Directory to export to. Defaults to current directory. Creates directory if needed.
 
 	[--stdout]
 		Output to stdout instead of file.
@@ -896,6 +899,9 @@ wp block template export <id> [--type=<type>] [--dir=<directory>] [--stdout]
 
     # Export to specific directory
     $ wp block template export twentytwentyfour//single --dir=./templates/
+
+    # Export to specific file path
+    $ wp block template export twentytwentyfour//single --file=exports/templates/single.html
 
 
 
