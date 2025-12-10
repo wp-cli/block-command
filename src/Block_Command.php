@@ -2,13 +2,10 @@
 
 namespace WP_CLI\Block;
 
-use WP_CLI_Command;
+use WP_CLI\Dispatcher\CommandNamespace;
 
 /**
  * Manages WordPress block editor blocks and related entities.
- *
- * This command provides tools for working with the WordPress block editor,
- * including block types, patterns, styles, bindings, templates, and synced patterns.
  *
  * ## EXAMPLES
  *
@@ -29,5 +26,5 @@ use WP_CLI_Command;
  *
  * @package wp-cli
  */
-class Block_Command extends WP_CLI_Command {
+class Block_Command extends CommandNamespace {
 }
