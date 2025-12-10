@@ -7,7 +7,7 @@ Feature: Block binding commands
     When I try `wp block binding list`
     Then STDERR should contain:
       """
-      is not a registered wp command
+      Requires WordPress 6.5 or greater.
       """
     And the return code should be 1
 
