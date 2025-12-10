@@ -240,3 +240,66 @@ Feature: Synced pattern (wp_block) CRUD commands
       """
       not found
       """
+
+  @require-wp-5.0
+  Scenario: Update non-existent synced pattern fails
+    Given a WP install
+
+    When I try `wp block synced-pattern update 999999 --title="Updated"`
+    Then STDERR should contain:
+      """
+      not found
+      """
+    And the return code should be 1
+
+  @require-wp-5.0
+  Scenario: Create synced pattern without content fails
+    Given a WP install
+
+    When I try `wp block synced-pattern create --title="No Content"`
+    Then STDERR should contain:
+      """
+      content is required
+      """
+    And the return code should be 1
+
+  @require-wp-5.0
+  Scenario: Create synced pattern with malformed content shows warning
+    Given a WP install
+
+    When I run `wp block synced-pattern create --title="Malformed Pattern" --content='<!-- wp:paragraph' --porcelain`
+    Then STDERR should contain:
+      """
+      Warning: Content does not appear to contain valid blocks.
+      """
+    And STDOUT should be a number
+
+  @require-wp-5.0
+  Scenario: List synced patterns in various formats
+    Given a WP install
+    When I run `wp block synced-pattern create --title="Format Test" --content='<!-- wp:paragraph --><p>X</p><!-- /wp:paragraph -->' --porcelain`
+    Then save STDOUT as {PATTERN_ID}
+
+    When I run `wp block synced-pattern list --format=table`
+    Then STDOUT should be a table containing rows:
+      | ID           |
+      | {PATTERN_ID} |
+
+    When I run `wp block synced-pattern list --format=csv`
+    Then STDOUT should contain:
+      """
+      ID,
+      """
+
+    When I run `wp block synced-pattern list --format=yaml`
+    Then STDOUT should contain:
+      """
+      post_title: Format Test
+      """
+
+    # Cleanup
+    When I run `wp block synced-pattern delete {PATTERN_ID} --force`
+    Then STDOUT should contain:
+      """
+      Deleted
+      """

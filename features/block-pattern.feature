@@ -62,3 +62,37 @@ Feature: Block pattern commands
       not registered
       """
     And the return code should be 1
+
+  @require-wp-5.5
+  Scenario: Search patterns with no matches returns empty
+    Given a WP install
+
+    When I run `wp block pattern list --search=xyznonexistent123 --format=count`
+    Then STDOUT should be:
+      """
+      0
+      """
+
+  @require-wp-5.5
+  Scenario: Get pattern content field
+    Given a WP install
+
+    When I run `wp block pattern list --field=name`
+    Then STDOUT should not be empty
+    And save STDOUT '%s' as {PATTERN_NAME}
+
+    When I run `wp block pattern get {PATTERN_NAME} --field=content`
+    Then STDOUT should contain:
+      """
+      <!-- wp:
+      """
+
+  @require-wp-5.5
+  Scenario: Filter by non-existent category returns empty
+    Given a WP install
+
+    When I run `wp block pattern list --category=nonexistent --format=count`
+    Then STDOUT should be:
+      """
+      0
+      """

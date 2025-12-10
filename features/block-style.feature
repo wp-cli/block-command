@@ -93,3 +93,63 @@ Feature: Block style commands
       """
       0
       """
+
+  @require-wp-5.3
+  Scenario: List styles for block with no registered styles
+    Given a WP install
+
+    # core/html typically has no styles registered
+    When I run `wp block style list --block=core/html --format=count`
+    Then STDOUT should be:
+      """
+      0
+      """
+
+  @require-wp-5.3
+  Scenario: List block styles in various formats
+    Given a WP install
+    # Create theme with style to ensure we have data
+    And a wp-content/themes/format-test-theme/style.css file:
+      """
+      /*
+      Theme Name: Format Test Theme
+      */
+      """
+    And a wp-content/themes/format-test-theme/index.php file:
+      """
+      <?php
+      """
+    And a wp-content/themes/format-test-theme/functions.php file:
+      """
+      <?php
+      add_action( 'init', function() {
+          register_block_style( 'core/paragraph', array(
+              'name'  => 'format-test-style',
+              'label' => 'Format Test Style',
+          ) );
+      } );
+      """
+
+    When I run `wp theme activate format-test-theme`
+    Then STDOUT should contain:
+      """
+      Success:
+      """
+
+    When I run `wp block style list --block=core/paragraph --format=ids`
+    Then STDOUT should contain:
+      """
+      format-test-style
+      """
+
+    When I run `wp block style list --block=core/paragraph --format=yaml`
+    Then STDOUT should contain:
+      """
+      name: format-test-style
+      """
+
+    When I run `wp block style list --block=core/paragraph --format=csv`
+    Then STDOUT should contain:
+      """
+      name,
+      """

@@ -279,8 +279,11 @@ class Block_Template_Command extends WP_CLI_Command {
 	 *   - wp_template_part
 	 * ---
 	 *
+	 * [--file=<file>]
+	 * : File path to export to. Parent directories will be created if needed.
+	 *
 	 * [--dir=<directory>]
-	 * : Directory to export to. Defaults to current directory.
+	 * : Directory to export to. Defaults to current directory. Creates directory if needed.
 	 *
 	 * [--stdout]
 	 * : Output to stdout instead of file.
@@ -295,6 +298,9 @@ class Block_Template_Command extends WP_CLI_Command {
 	 *
 	 *     # Export to specific directory
 	 *     $ wp block template export twentytwentyfour//single --dir=./templates/
+	 *
+	 *     # Export to specific file path
+	 *     $ wp block template export twentytwentyfour//single --file=exports/templates/single.html
 	 *
 	 * @param array $args       Positional arguments.
 	 * @param array $assoc_args Associative arguments.
@@ -314,14 +320,30 @@ class Block_Template_Command extends WP_CLI_Command {
 			return;
 		}
 
-		$dir = isset( $assoc_args['dir'] ) ? rtrim( $assoc_args['dir'], '/' ) : '.';
+		// Handle --file option for direct file path.
+		if ( ! empty( $assoc_args['file'] ) ) {
+			$filepath = $assoc_args['file'];
+			$dir      = dirname( $filepath );
 
-		if ( ! is_dir( $dir ) ) {
-			WP_CLI::error( "Directory '{$dir}' does not exist." );
+			// Create parent directories if needed.
+			if ( ! empty( $dir ) && '.' !== $dir && ! is_dir( $dir ) ) {
+				if ( ! wp_mkdir_p( $dir ) ) {
+					WP_CLI::error( "Could not create directory '{$dir}'." );
+				}
+			}
+		} else {
+			$dir = isset( $assoc_args['dir'] ) ? rtrim( $assoc_args['dir'], '/' ) : '.';
+
+			// Create directory if needed.
+			if ( ! is_dir( $dir ) ) {
+				if ( ! wp_mkdir_p( $dir ) ) {
+					WP_CLI::error( "Could not create directory '{$dir}'." );
+				}
+			}
+
+			$filename = $template->slug . '.html';
+			$filepath = $dir . '/' . $filename;
 		}
-
-		$filename = $template->slug . '.html';
-		$filepath = $dir . '/' . $filename;
 
 		$result = file_put_contents( $filepath, $content );
 
