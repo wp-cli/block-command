@@ -19,9 +19,6 @@ Manages WordPress block editor blocks and related entities.
 wp block
 ~~~
 
-This command provides tools for working with the WordPress block editor,
-including block types, patterns, styles, bindings, templates, and synced patterns.
-
 **EXAMPLES**
 
     # List all registered block types
@@ -62,8 +59,6 @@ WP_Block_Type_Registry.
 
     # List all core blocks
     $ wp block type list --namespace=core
-
-
 
 
 
@@ -217,8 +212,6 @@ WP_Block_Patterns_Registry.
 
 
 
-
-
 ### wp block pattern list
 
 Lists registered block patterns.
@@ -353,8 +346,6 @@ WP_Block_Pattern_Categories_Registry.
 
 
 
-
-
 ### wp block pattern-category list
 
 Lists registered block pattern categories.
@@ -465,8 +456,6 @@ Get information on block style variations from the WP_Block_Styles_Registry.
 
     # Get details about a specific style
     $ wp block style get core/button outline
-
-
 
 
 
@@ -592,8 +581,6 @@ Block bindings allow dynamic data to be connected to block attributes.
 
 
 
-
-
 ### wp block binding list
 
 Lists registered block binding sources.
@@ -707,8 +694,6 @@ Get information on block templates used in Full Site Editing (FSE) themes.
 
     # Get a specific template
     $ wp block template get twentytwentyfour//single
-
-
 
 
 
@@ -926,8 +911,6 @@ synced (changes reflect everywhere) or not synced (regular patterns).
 
     # Delete a synced pattern
     $ wp block synced-pattern delete 123
-
-
 
 
 
