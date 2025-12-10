@@ -182,3 +182,19 @@ Feature: Block template commands
       Success: Exported template to 'subdir/nested/template.html'.
       """
     And the subdir/nested/template.html file should exist
+
+  @require-wp-5.9
+  Scenario: Export fails when both --file and --dir are provided
+    Given a WP install
+    And I try `wp theme install twentytwentyfour --activate`
+
+    When I run `wp block template list --field=id`
+    Then STDOUT should not be empty
+    And save STDOUT '%s' as {TEMPLATE_ID}
+
+    When I try `wp block template export {TEMPLATE_ID} --file=template.html --dir=./exports`
+    Then STDERR should contain:
+      """
+      The --file and --dir options are mutually exclusive.
+      """
+    And the return code should be 1

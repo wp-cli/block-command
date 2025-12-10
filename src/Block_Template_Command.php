@@ -306,6 +306,11 @@ class Block_Template_Command extends WP_CLI_Command {
 	 * @param array $assoc_args Associative arguments.
 	 */
 	public function export( $args, $assoc_args ) {
+		// Check for mutually exclusive options.
+		if ( ! empty( $assoc_args['file'] ) && ! empty( $assoc_args['dir'] ) ) {
+			WP_CLI::error( 'The --file and --dir options are mutually exclusive.' );
+		}
+
 		$type     = isset( $assoc_args['type'] ) ? $assoc_args['type'] : 'wp_template';
 		$template = get_block_template( $args[0], $type );
 
