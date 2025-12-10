@@ -267,12 +267,13 @@ Feature: Synced pattern (wp_block) CRUD commands
   Scenario: Create synced pattern with malformed content shows warning
     Given a WP install
 
-    When I run `wp block synced-pattern create --title="Malformed Pattern" --content='<!-- wp:paragraph' --porcelain`
+    When I try `wp block synced-pattern create --title="Malformed Pattern" --content='<!-- wp:paragraph' --porcelain`
     Then STDERR should contain:
       """
       Warning: Content does not appear to contain valid blocks.
       """
     And STDOUT should be a number
+    And the return code should be 0
 
   @require-wp-5.0
   Scenario: List synced patterns in various formats
@@ -280,7 +281,7 @@ Feature: Synced pattern (wp_block) CRUD commands
     When I run `wp block synced-pattern create --title="Format Test" --content='<!-- wp:paragraph --><p>X</p><!-- /wp:paragraph -->' --porcelain`
     Then save STDOUT as {PATTERN_ID}
 
-    When I run `wp block synced-pattern list --format=table`
+    When I run `wp block synced-pattern list --fields=ID --format=table`
     Then STDOUT should be a table containing rows:
       | ID           |
       | {PATTERN_ID} |

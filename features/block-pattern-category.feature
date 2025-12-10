@@ -45,7 +45,7 @@ Feature: Block pattern category commands
   Scenario: List pattern categories in various formats
     Given a WP install
 
-    When I run `wp block pattern-category list --format=table`
+    When I run `wp block pattern-category list --fields=name --format=table`
     Then STDOUT should be a table containing rows:
       | name |
       | text |

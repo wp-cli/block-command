@@ -136,7 +136,7 @@ Feature: Block style commands
       Success:
       """
 
-    When I run `wp block style list --block=core/paragraph --format=ids`
+    When I run `wp block style list --block=core/paragraph --field=name`
     Then STDOUT should contain:
       """
       format-test-style

@@ -125,7 +125,7 @@ Feature: Block type commands
   Scenario: List block types in various formats
     Given a WP install
 
-    When I run `wp block type list --format=table`
+    When I run `wp block type list --fields=name --format=table`
     Then STDOUT should be a table containing rows:
       | name           |
       | core/paragraph |

@@ -52,7 +52,7 @@ Feature: Block binding commands
   Scenario: List binding sources in various formats
     Given a WP install
 
-    When I run `wp block binding list --format=table`
+    When I run `wp block binding list --fields=name --format=table`
     Then STDOUT should be a table containing rows:
       | name           |
       | core/post-meta |
