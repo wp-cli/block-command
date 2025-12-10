@@ -44,9 +44,7 @@ $wpcli_block_before_invoke_6_5 = static function () {
 };
 
 // Register the namespace command for better help screens.
-if ( class_exists( 'WP_CLI\Dispatcher\CommandNamespace' ) ) {
-	WP_CLI::add_command( 'block', WP_CLI\Block\Block_Command::class );
-}
+WP_CLI::add_command( 'block', WP_CLI\Block\Block_Command::class );
 
 // Register commands with appropriate version checks.
 WP_CLI::add_command( 'block type', WP_CLI\Block\Block_Type_Command::class, [ 'before_invoke' => $wpcli_block_before_invoke_5_0 ] );
