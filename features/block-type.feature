@@ -110,3 +110,54 @@ Feature: Block type commands
       not registered
       """
     And the return code should be 1
+
+  @require-wp-5.0
+  Scenario: Filter by non-existent namespace returns empty
+    Given a WP install
+
+    When I run `wp block type list --namespace=nonexistent --format=count`
+    Then STDOUT should be:
+      """
+      0
+      """
+
+  @require-wp-5.0
+  Scenario: List block types in various formats
+    Given a WP install
+
+    When I run `wp block type list --fields=name --format=table`
+    Then STDOUT should be a table containing rows:
+      | name           |
+      | core/paragraph |
+
+    When I run `wp block type list --format=csv`
+    Then STDOUT should contain:
+      """
+      name,
+      """
+
+    When I run `wp block type list --format=yaml`
+    Then STDOUT should contain:
+      """
+      name: core/paragraph
+      """
+
+  @require-wp-5.0
+  Scenario: List block types with custom fields
+    Given a WP install
+
+    When I run `wp block type list --fields=name,category --format=table`
+    Then STDOUT should be a table containing rows:
+      | name           | category |
+      | core/paragraph | text     |
+
+  @require-wp-5.0
+  Scenario: Error when using both --dynamic and --static flags
+    Given a WP install
+
+    When I try `wp block type list --dynamic --static`
+    Then STDERR should contain:
+      """
+      --dynamic and --static are mutually exclusive
+      """
+    And the return code should be 1

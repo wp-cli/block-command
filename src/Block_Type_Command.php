@@ -124,6 +124,14 @@ class Block_Type_Command extends WP_CLI_Command {
 	 * @param array $assoc_args Associative arguments.
 	 */
 	public function list_( $args, $assoc_args ) {
+		// Validate mutually exclusive flags.
+		$dynamic = isset( $assoc_args['dynamic'] );
+		$static  = isset( $assoc_args['static'] );
+
+		if ( $dynamic && $static ) {
+			WP_CLI::error( '--dynamic and --static are mutually exclusive.' );
+		}
+
 		$registry    = WP_Block_Type_Registry::get_instance();
 		$block_types = $registry->get_all_registered();
 

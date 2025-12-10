@@ -40,3 +40,31 @@ Feature: Block pattern category commands
       not registered
       """
     And the return code should be 1
+
+  @require-wp-5.5
+  Scenario: List pattern categories in various formats
+    Given a WP install
+
+    When I run `wp block pattern-category list --fields=name --format=table`
+    Then STDOUT should be a table containing rows:
+      | name |
+      | text |
+
+    When I run `wp block pattern-category list --format=csv`
+    Then STDOUT should contain:
+      """
+      name,
+      """
+
+    When I run `wp block pattern-category list --format=yaml`
+    Then STDOUT should contain:
+      """
+      name: text
+      """
+
+  @require-wp-5.5
+  Scenario: Get pattern category label field
+    Given a WP install
+
+    When I run `wp block pattern-category get text --field=label`
+    Then STDOUT should not be empty

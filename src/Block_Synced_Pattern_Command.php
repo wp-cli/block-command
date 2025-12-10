@@ -294,6 +294,13 @@ class Block_Synced_Pattern_Command extends WP_CLI_Command {
 			WP_CLI::error( 'Pattern title is required. Use --title=<title>.' );
 		}
 
+		if ( empty( $content ) ) {
+			WP_CLI::error( 'Pattern content is required. Use --content=<content> or provide a file.' );
+		}
+
+		// Warn if content doesn't appear to contain valid blocks.
+		$this->validate_block_content( $content );
+
 		$post_data = [
 			'post_type'    => 'wp_block',
 			'post_title'   => $assoc_args['title'],
@@ -523,5 +530,26 @@ class Block_Synced_Pattern_Command extends WP_CLI_Command {
 	 */
 	private function get_formatter( &$assoc_args ) {
 		return new Formatter( $assoc_args, $this->fields, 'synced-pattern' );
+	}
+
+	/**
+	 * Validates block content and warns if it appears malformed.
+	 *
+	 * @param string $content Block content to validate.
+	 */
+	private function validate_block_content( $content ) {
+		$blocks = parse_blocks( $content );
+
+		// Filter out empty/null blocks (freeform content).
+		$valid_blocks = array_filter(
+			$blocks,
+			function ( $block ) {
+				return ! empty( $block['blockName'] );
+			}
+		);
+
+		if ( empty( $valid_blocks ) ) {
+			WP_CLI::warning( 'Content does not appear to contain valid blocks. The pattern will be created with the provided content.' );
+		}
 	}
 }

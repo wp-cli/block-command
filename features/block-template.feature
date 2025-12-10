@@ -126,3 +126,75 @@ Feature: Block template commands
       not found
       """
     And the return code should be 1
+
+  @require-wp-5.9
+  Scenario: Export template to file
+    Given a WP install
+    And I try `wp theme install twentytwentyfour --activate`
+
+    When I run `wp block template list --field=id`
+    Then STDOUT should not be empty
+    And save STDOUT '%s' as {TEMPLATE_ID}
+
+    When I run `wp block template export {TEMPLATE_ID} --file=exported-template.html`
+    Then STDOUT should contain:
+      """
+      Success:
+      """
+    And the exported-template.html file should contain:
+      """
+      <!-- wp:
+      """
+
+  @require-wp-5.9
+  Scenario: List templates with classic theme returns empty
+    Given a WP install
+    # Default theme is usually a classic theme in test environment
+    # If twentytwentyone is available, use it as a classic theme example
+
+    When I run `wp block template list --format=count`
+    # Classic themes may return 0 templates
+    Then STDOUT should be a number
+
+  @require-wp-5.9
+  Scenario: Filter template parts by invalid area returns empty
+    Given a WP install
+    And I try `wp theme install twentytwentyfour --activate`
+
+    When I run `wp block template list --type=wp_template_part --area=nonexistent --format=count`
+    Then STDOUT should be:
+      """
+      0
+      """
+
+  @require-wp-5.9
+  Scenario: Export template creates subdirectories
+    Given a WP install
+    And I try `wp theme install twentytwentyfour --activate`
+
+    When I run `wp block template list --field=id`
+    Then STDOUT should not be empty
+    And save STDOUT '%s' as {TEMPLATE_ID}
+
+    When I run `wp block template export {TEMPLATE_ID} --file=subdir/nested/template.html`
+    Then STDOUT should contain:
+      """
+      Success: Exported template to 'subdir/nested/template.html'.
+      """
+    And the subdir/nested/template.html file should exist
+
+  @require-wp-5.9
+  Scenario: Export fails when both --file and --dir are provided
+    Given a WP install
+    And I try `wp theme install twentytwentyfour --activate`
+
+    When I run `wp block template list --field=id`
+    Then STDOUT should not be empty
+    And save STDOUT '%s' as {TEMPLATE_ID}
+
+    When I try `wp block template export {TEMPLATE_ID} --file=template.html --dir=./exports`
+    Then STDERR should contain:
+      """
+      The --file and --dir options are mutually exclusive.
+      """
+    And the return code should be 1

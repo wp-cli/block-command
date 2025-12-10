@@ -1,5 +1,16 @@
 Feature: Block binding commands
 
+  @less-than-wp-6.5
+  Scenario: Block binding commands not available on WP < 6.5
+    Given a WP install
+
+    When I try `wp block binding list`
+    Then STDERR should contain:
+      """
+      Requires WordPress 6.5 or greater.
+      """
+    And the return code should be 1
+
   @require-wp-6.5
   Scenario: List block binding sources
     Given a WP install
@@ -36,3 +47,37 @@ Feature: Block binding commands
       not registered
       """
     And the return code should be 1
+
+  @require-wp-6.5
+  Scenario: List binding sources in various formats
+    Given a WP install
+
+    When I run `wp block binding list --fields=name --format=table`
+    Then STDOUT should be a table containing rows:
+      | name           |
+      | core/post-meta |
+
+    When I run `wp block binding list --format=yaml`
+    Then STDOUT should contain:
+      """
+      name: core/post-meta
+      """
+
+    When I run `wp block binding list --format=csv`
+    Then STDOUT should contain:
+      """
+      name,
+      """
+
+  @require-wp-6.5
+  Scenario: Get binding source field values
+    Given a WP install
+
+    When I run `wp block binding get core/post-meta --field=name`
+    Then STDOUT should be:
+      """
+      core/post-meta
+      """
+
+    When I run `wp block binding get core/post-meta --field=label`
+    Then STDOUT should not be empty
