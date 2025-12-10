@@ -1,0 +1,66 @@
+parameters:
+  level: 9
+  paths:
+    - src
+    - block-command.php
+  scanDirectories:
+    - vendor/wp-cli/wp-cli/php
+  scanFiles:
+    - vendor/php-stubs/wordpress-stubs/wordpress-stubs.php
+  treatPhpDocTypesAsCertain: false
+  ignoreErrors:
+    # Standard WP-CLI ignores (same as entity-command)
+    - identifier: missingType.iterableValue
+    - identifier: missingType.return
+    # WordPress Block registry classes not yet in stubs
+    -
+      message: '#on an unknown class WP_Block_Type_Registry#'
+      reportUnmatched: false
+    -
+      message: '#on an unknown class WP_Block_Patterns_Registry#'
+      reportUnmatched: false
+    -
+      message: '#on an unknown class WP_Block_Pattern_Categories_Registry#'
+      reportUnmatched: false
+    -
+      message: '#on an unknown class WP_Block_Styles_Registry#'
+      reportUnmatched: false
+    -
+      message: '#on an unknown class WP_Block_Bindings_Registry#'
+      reportUnmatched: false
+    -
+      message: '#on an unknown class WP_Block_Bindings_Source#'
+      reportUnmatched: false
+    -
+      message: '#on an unknown class WP_Block_Template#'
+      reportUnmatched: false
+    -
+      message: '#unknown class WP_CLI\\Block\\WP_Block_Bindings_Source#'
+      reportUnmatched: false
+    -
+      message: '#unknown class WP_CLI\\Block\\WP_Block_Template#'
+      reportUnmatched: false
+    -
+      message: '#has invalid type WP_CLI\\Block\\WP_Block_Bindings_Source#'
+      reportUnmatched: false
+    -
+      message: '#has invalid type WP_CLI\\Block\\WP_Block_Template#'
+      reportUnmatched: false
+    -
+      message: '#expects WP_CLI\\Block\\WP_Block_Bindings_Source#'
+      reportUnmatched: false
+    -
+      message: '#expects WP_CLI\\Block\\WP_Block_Template#'
+      reportUnmatched: false
+    # Spyc YAML dumper
+    -
+      message: '#Call to static method YAMLDump\(\) on an unknown class Spyc#'
+      reportUnmatched: false
+    # WP_CLI\Formatter::$format is not type-hinted in WP-CLI core
+    -
+      message: '#Access to an undefined property WP_CLI\\Formatter::\$format#'
+      reportUnmatched: false
+    # WP_Block_Type properties not fully typed in stubs
+    -
+      message: '#Access to an undefined property WP_Block_Type::#'
+      reportUnmatched: false

@@ -1,0 +1,89 @@
+{
+  "name": "wp-cli/block-command",
+  "type": "wp-cli-package",
+  "description": "Manages block types, patterns, styles, bindings, and templates.",
+  "homepage": "https://github.com/wp-cli/block-command",
+  "license": "MIT",
+  "authors": [],
+  "require": {
+    "wp-cli/wp-cli": "^2.12"
+  },
+  "require-dev": {
+    "wp-cli/extension-command": "^2",
+    "wp-cli/wp-cli-tests": "^5"
+  },
+  "config": {
+    "process-timeout": 7200,
+    "sort-packages": true,
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true,
+      "johnpbloch/wordpress-core-installer": true,
+      "phpstan/extension-installer": true
+    },
+    "lock": false
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.x-dev"
+    },
+    "bundled": true,
+    "commands": [
+      "block",
+      "block type",
+      "block type list",
+      "block type get",
+      "block pattern",
+      "block pattern list",
+      "block pattern get",
+      "block pattern-category",
+      "block pattern-category list",
+      "block pattern-category get",
+      "block style",
+      "block style list",
+      "block style get",
+      "block binding",
+      "block binding list",
+      "block binding get",
+      "block template",
+      "block template list",
+      "block template get",
+      "block template export",
+      "block synced-pattern",
+      "block synced-pattern list",
+      "block synced-pattern get",
+      "block synced-pattern create",
+      "block synced-pattern update",
+      "block synced-pattern delete"
+    ]
+  },
+  "autoload": {
+    "psr-4": {
+      "WP_CLI\\Block\\": "src/"
+    },
+    "files": [
+      "block-command.php"
+    ]
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "scripts": {
+    "behat": "run-behat-tests",
+    "behat-rerun": "rerun-behat-tests",
+    "lint": "run-linter-tests",
+    "phpcs": "run-phpcs-tests",
+    "phpstan": "run-phpstan-tests",
+    "phpcbf": "run-phpcbf-cleanup",
+    "phpunit": "run-php-unit-tests",
+    "prepare-tests": "install-package-tests",
+    "test": [
+      "@lint",
+      "@phpcs",
+      "@phpstan",
+      "@phpunit",
+      "@behat"
+    ]
+  },
+  "support": {
+    "issues": "https://github.com/wp-cli/block-command/issues"
+  }
+}
