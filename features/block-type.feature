@@ -164,10 +164,10 @@ Feature: Block type commands
   Scenario: Check if a block type exists
     Given a WP install
 
-    When I run `wp block type exists core/paragraph`
+    When I run `wp block type exists core/archives`
     Then STDOUT should be:
       """
-      Success: Block type 'core/paragraph' is registered.
+      Success: Block type 'core/archives' is registered.
       """
     And the return code should be 0
 
