@@ -280,7 +280,7 @@ class Block_Type_Command extends WP_CLI_Command {
 	 */
 	public function exists( $args ) {
 		$registry   = WP_Block_Type_Registry::get_instance();
-		$block_type = $registry->get_registered( $args[0] );
+		$block_type = $registry->is_registered( $args[0] );
 
 		if ( $block_type ) {
 			WP_CLI::success( "Block type '{$args[0]}' is registered." );
