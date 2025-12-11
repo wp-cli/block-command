@@ -14,7 +14,7 @@ Feature: Block type commands
     When I run `wp block type list --format=ids`
     Then STDOUT should contain:
       """
-      core/paragraph
+      core/archives
       """
 
   @require-wp-5.0
@@ -24,11 +24,11 @@ Feature: Block type commands
     When I run `wp block type list --namespace=core --field=name`
     Then STDOUT should contain:
       """
-      core/paragraph
+      core/archives
       """
     And STDOUT should contain:
       """
-      core/heading
+      core/categories
       """
     And STDOUT should not contain:
       """
@@ -46,54 +46,52 @@ Feature: Block type commands
       core/archives
       """
 
+    # Verify dynamic count is a number
+    When I run `wp block type list --dynamic --format=count`
+    Then STDOUT should be a number
+
+    When I run `wp block type list --format=count`
+    Then STDOUT should be a number
+
+  @require-wp-5.5
+  Scenario: Filter by static blocks
+    Given a WP install
+
     # Static blocks don't have render_callback, like core/paragraph
+    # Static blocks are only registered server-side since WP 5.5
     When I run `wp block type list --static --field=name`
     Then STDOUT should contain:
       """
       core/paragraph
       """
 
-    # Verify dynamic and static are mutually exclusive
-    When I run `wp block type list --dynamic --format=count`
-    Then save STDOUT as {DYNAMIC_COUNT}
-
     When I run `wp block type list --static --format=count`
-    Then save STDOUT as {STATIC_COUNT}
-
-    When I run `wp block type list --format=count`
     Then STDOUT should be a number
 
-  @require-wp-5.0
-  Scenario: Get a specific block type
-    Given a WP install
-
-    When I run `wp block type get core/paragraph --format=json`
-    Then STDOUT should be JSON containing:
-      """
-      {"name":"core/paragraph"}
-      """
-
-    When I run `wp block type get core/paragraph --field=name`
-    Then STDOUT should be:
-      """
-      core/paragraph
-      """
-
-    # Verify category field is accessible
-    When I run `wp block type get core/paragraph --field=category`
-    Then STDOUT should be:
-      """
-      text
-      """
-
-    # Verify is_dynamic is accessible (static blocks return empty/falsy)
+    # Verify static block has is_dynamic=false
     When I run `wp block type get core/paragraph --format=json`
     Then STDOUT should be JSON containing:
       """
       {"is_dynamic":false}
       """
 
-    # Verify dynamic block has is_dynamic=true
+  @require-wp-5.0
+  Scenario: Get a specific block type
+    Given a WP install
+
+    When I run `wp block type get core/archives --format=json`
+    Then STDOUT should be JSON containing:
+      """
+      {"name":"core/archives"}
+      """
+
+    When I run `wp block type get core/archives --field=name`
+    Then STDOUT should be:
+      """
+      core/archives
+      """
+
+    # Verify is_dynamic is accessible (dynamic blocks return true)
     When I run `wp block type get core/archives --format=json`
     Then STDOUT should be JSON containing:
       """
@@ -128,7 +126,7 @@ Feature: Block type commands
     When I run `wp block type list --fields=name --format=table`
     Then STDOUT should be a table containing rows:
       | name           |
-      | core/paragraph |
+      | core/archives  |
 
     When I run `wp block type list --format=csv`
     Then STDOUT should contain:
@@ -139,17 +137,17 @@ Feature: Block type commands
     When I run `wp block type list --format=yaml`
     Then STDOUT should contain:
       """
-      name: core/paragraph
+      name: core/archives
       """
 
   @require-wp-5.0
   Scenario: List block types with custom fields
     Given a WP install
 
-    When I run `wp block type list --fields=name,category --format=table`
+    When I run `wp block type list --fields=name,is_dynamic --format=table`
     Then STDOUT should be a table containing rows:
-      | name           | category |
-      | core/paragraph | text     |
+      | name           | is_dynamic |
+      | core/archives  | 1          |
 
   @require-wp-5.0
   Scenario: Error when using both --dynamic and --static flags
