@@ -276,14 +276,15 @@ class Block_Type_Command extends WP_CLI_Command {
 	 *
 	 * @subcommand exists
 	 *
-	 * @param array $args Positional arguments.
+	 * @param array $args       Positional arguments.
+	 * @param array $assoc_args Associative arguments.
 	 */
-	public function exists( $args ) {
-		$registry   = WP_Block_Type_Registry::get_instance();
-		$block_type = $registry->is_registered( $args[0] );
+	public function exists_( $args, $assoc_args ) {
+		$registry = WP_Block_Type_Registry::get_instance();
+		$name     = $args[0];
 
-		if ( $block_type ) {
-			WP_CLI::success( "Block type '{$args[0]}' is registered." );
+		if ( $registry->is_registered( $name ) ) {
+			WP_CLI::success( "Block type '{$name}' is registered." );
 		} else {
 			WP_CLI::halt( 1 );
 		}
