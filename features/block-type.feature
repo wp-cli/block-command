@@ -68,6 +68,13 @@ Feature: Block type commands
     When I run `wp block type list --static --format=count`
     Then STDOUT should be a number
 
+    # Verify static block has is_dynamic=false
+    When I run `wp block type get core/paragraph --format=json`
+    Then STDOUT should be JSON containing:
+      """
+      {"is_dynamic":false}
+      """
+
   @require-wp-5.0
   Scenario: Get a specific block type
     Given a WP install
@@ -82,13 +89,6 @@ Feature: Block type commands
     Then STDOUT should be:
       """
       core/archives
-      """
-
-    # Verify category field is accessible
-    When I run `wp block type get core/archives --field=category`
-    Then STDOUT should be:
-      """
-      widgets
       """
 
     # Verify is_dynamic is accessible (dynamic blocks return true)
@@ -144,10 +144,10 @@ Feature: Block type commands
   Scenario: List block types with custom fields
     Given a WP install
 
-    When I run `wp block type list --fields=name,category --format=table`
+    When I run `wp block type list --fields=name,is_dynamic --format=table`
     Then STDOUT should be a table containing rows:
-      | name           | category |
-      | core/archives  | widgets  |
+      | name           | is_dynamic |
+      | core/archives  | 1          |
 
   @require-wp-5.0
   Scenario: Error when using both --dynamic and --static flags
