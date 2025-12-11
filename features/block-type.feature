@@ -159,3 +159,18 @@ Feature: Block type commands
       --dynamic and --static are mutually exclusive
       """
     And the return code should be 1
+
+  @require-wp-5.0
+  Scenario: Check if a block type exists
+    Given a WP install
+
+    When I run `wp block type exists core/archives`
+    Then STDOUT should be:
+      """
+      Success: Block type 'core/archives' is registered.
+      """
+    And the return code should be 0
+
+    When I try `wp block type exists core/nonexistent`
+    Then STDOUT should be empty
+    And the return code should be 1

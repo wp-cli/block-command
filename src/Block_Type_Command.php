@@ -254,6 +254,43 @@ class Block_Type_Command extends WP_CLI_Command {
 	}
 
 	/**
+	 * Checks whether a block type is registered.
+	 *
+	 * Exits with return code 0 if the block type exists, 1 if it does not.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <name>
+	 * : The block type name, including namespace.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Check if a block type exists.
+	 *     $ wp block type exists core/paragraph
+	 *     Success: Block type 'core/paragraph' is registered.
+	 *
+	 *     # Check for a non-existent block type.
+	 *     $ wp block type exists core/nonexistent
+	 *     $ echo $?
+	 *     1
+	 *
+	 * @subcommand exists
+	 *
+	 * @param array $args       Positional arguments.
+	 * @param array $assoc_args Associative arguments.
+	 */
+	public function exists_( $args, $assoc_args ) {
+		$registry = WP_Block_Type_Registry::get_instance();
+		$name     = $args[0];
+
+		if ( $registry->is_registered( $name ) ) {
+			WP_CLI::success( "Block type '{$name}' is registered." );
+		} else {
+			WP_CLI::halt( 1 );
+		}
+	}
+
+	/**
 	 * Converts a WP_Block_Type object to an associative array.
 	 *
 	 * @param WP_Block_Type $block_type Block type object.
