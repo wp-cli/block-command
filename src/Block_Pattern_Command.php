@@ -140,6 +140,9 @@ class Block_Pattern_Command extends WP_CLI_Command {
 					// Search in keywords.
 					if ( isset( $pattern['keywords'] ) && is_array( $pattern['keywords'] ) ) {
 						foreach ( $pattern['keywords'] as $keyword ) {
+							/**
+							 * @var string $keyword
+							 */
 							if ( strpos( strtolower( $keyword ), $search ) !== false ) {
 								return true;
 							}
