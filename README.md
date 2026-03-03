@@ -62,6 +62,34 @@ WP_Block_Type_Registry.
 
 
 
+### wp block type exists
+
+Checks whether a block type is registered.
+
+~~~
+wp block type exists <name>
+~~~
+
+Exits with return code 0 if the block type exists, 1 if it does not.
+
+**OPTIONS**
+
+	<name>
+		The block type name, including namespace.
+
+**EXAMPLES**
+
+    # Check if a block type exists.
+    $ wp block type exists core/paragraph
+    Success: Block type 'core/paragraph' is registered.
+
+    # Check for a non-existent block type.
+    $ wp block type exists core/nonexistent
+    $ echo $?
+    1
+
+
+
 ### wp block type list
 
 Lists registered block types.

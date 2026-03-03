@@ -30,6 +30,7 @@
     "commands": [
       "block",
       "block type",
+      "block type exists",
       "block type list",
       "block type get",
       "block pattern",
