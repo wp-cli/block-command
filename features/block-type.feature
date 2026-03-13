@@ -147,7 +147,7 @@ Feature: Block type commands
     When I run `wp block type list --fields=name,is_dynamic --format=table`
     Then STDOUT should be a table containing rows:
       | name           | is_dynamic |
-      | core/archives  | 1          |
+      | core/archives  | true       |
 
   @require-wp-5.0
   Scenario: Error when using both --dynamic and --static flags
