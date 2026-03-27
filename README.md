@@ -3,7 +3,7 @@ wp-cli/block-command
 
 Manages block types, patterns, styles, bindings, and templates.
 
-[![Testing](https://github.com/wp-cli/block-command/actions/workflows/testing.yml/badge.svg)](https://github.com/wp-cli/block-command/actions/workflows/testing.yml)
+[![Testing](https://github.com/wp-cli/block-command/actions/workflows/testing.yml/badge.svg)](https://github.com/wp-cli/block-command/actions/workflows/testing.yml) [![Code Coverage](https://codecov.io/gh/wp-cli/block-command/branch/main/graph/badge.svg)](https://codecov.io/gh/wp-cli/block-command/tree/main)
 
 Quick links: [Using](#using) | [Installing](#installing) | [Contributing](#contributing) | [Support](#support)
 
