@@ -4,7 +4,7 @@ Feature: Synced pattern (wp_block) CRUD commands
   Scenario: Create and manage synced patterns
     Given a WP install
 
-    When I run `wp block synced-pattern create --title="Test Pattern" --content='<!-- wp:paragraph --><p>Hello World</p><!-- /wp:paragraph -->' --porcelain`
+    When I run `wp block synced-pattern create --title="Test Pattern" --content="<!-- wp:paragraph --><p>Hello World</p><!-- /wp:paragraph -->" --porcelain`
     Then STDOUT should be a number
     And save STDOUT as {PATTERN_ID}
 
@@ -61,7 +61,7 @@ Feature: Synced pattern (wp_block) CRUD commands
   Scenario: Create unsynced pattern
     Given a WP install
 
-    When I run `wp block synced-pattern create --title="Unsynced Pattern" --content='<!-- wp:paragraph --><p>Test</p><!-- /wp:paragraph -->' --sync-status=unsynced --porcelain`
+    When I run `wp block synced-pattern create --title="Unsynced Pattern" --content="<!-- wp:paragraph --><p>Test</p><!-- /wp:paragraph -->" --sync-status=unsynced --porcelain`
     Then STDOUT should be a number
     And save STDOUT as {PATTERN_ID}
 
@@ -81,10 +81,10 @@ Feature: Synced pattern (wp_block) CRUD commands
   Scenario: Filter by sync status
     Given a WP install
 
-    When I run `wp block synced-pattern create --title="Synced A" --content='<!-- wp:paragraph --><p>A</p><!-- /wp:paragraph -->' --porcelain`
+    When I run `wp block synced-pattern create --title="Synced A" --content="<!-- wp:paragraph --><p>A</p><!-- /wp:paragraph -->" --porcelain`
     Then save STDOUT as {SYNCED_ID}
 
-    When I run `wp block synced-pattern create --title="Unsynced B" --content='<!-- wp:paragraph --><p>B</p><!-- /wp:paragraph -->' --sync-status=unsynced --porcelain`
+    When I run `wp block synced-pattern create --title="Unsynced B" --content="<!-- wp:paragraph --><p>B</p><!-- /wp:paragraph -->" --sync-status=unsynced --porcelain`
     Then save STDOUT as {UNSYNCED_ID}
 
     When I run `wp block synced-pattern list --sync-status=synced --format=ids`
@@ -117,7 +117,7 @@ Feature: Synced pattern (wp_block) CRUD commands
   Scenario: Trash vs permanent delete
     Given a WP install
 
-    When I run `wp block synced-pattern create --title="Trash Test" --content='<!-- wp:paragraph --><p>X</p><!-- /wp:paragraph -->' --porcelain`
+    When I run `wp block synced-pattern create --title="Trash Test" --content="<!-- wp:paragraph --><p>X</p><!-- /wp:paragraph -->" --porcelain`
     Then save STDOUT as {PATTERN_ID}
 
     # Delete without --force sends to trash
@@ -138,11 +138,11 @@ Feature: Synced pattern (wp_block) CRUD commands
   Scenario: Update content and sync status
     Given a WP install
 
-    When I run `wp block synced-pattern create --title="Update Test" --content='<!-- wp:paragraph --><p>Original</p><!-- /wp:paragraph -->' --porcelain`
+    When I run `wp block synced-pattern create --title="Update Test" --content="<!-- wp:paragraph --><p>Original</p><!-- /wp:paragraph -->" --porcelain`
     Then save STDOUT as {PATTERN_ID}
 
     # Update content
-    When I run `wp block synced-pattern update {PATTERN_ID} --content='<!-- wp:paragraph --><p>Modified</p><!-- /wp:paragraph -->'`
+    When I run `wp block synced-pattern update {PATTERN_ID} --content="<!-- wp:paragraph --><p>Modified</p><!-- /wp:paragraph -->"`
     Then STDOUT should contain:
       """
       Updated
@@ -178,7 +178,7 @@ Feature: Synced pattern (wp_block) CRUD commands
   Scenario: Create pattern without title fails
     Given a WP install
 
-    When I try `wp block synced-pattern create --content='<!-- wp:paragraph --><p>No title</p><!-- /wp:paragraph -->'`
+    When I try `wp block synced-pattern create --content="<!-- wp:paragraph --><p>No title</p><!-- /wp:paragraph -->"`
     Then STDERR should contain:
       """
       title is required
@@ -189,10 +189,10 @@ Feature: Synced pattern (wp_block) CRUD commands
   Scenario: Search patterns by title
     Given a WP install
 
-    When I run `wp block synced-pattern create --title="Alpha Hero Section" --content='<!-- wp:paragraph --><p>Alpha</p><!-- /wp:paragraph -->' --porcelain`
+    When I run `wp block synced-pattern create --title="Alpha Hero Section" --content="<!-- wp:paragraph --><p>Alpha</p><!-- /wp:paragraph -->" --porcelain`
     Then save STDOUT as {ALPHA_ID}
 
-    When I run `wp block synced-pattern create --title="Beta Footer" --content='<!-- wp:paragraph --><p>Beta</p><!-- /wp:paragraph -->' --porcelain`
+    When I run `wp block synced-pattern create --title="Beta Footer" --content="<!-- wp:paragraph --><p>Beta</p><!-- /wp:paragraph -->" --porcelain`
     Then save STDOUT as {BETA_ID}
 
     When I run `wp block synced-pattern list --search=Hero --format=ids`
@@ -227,7 +227,7 @@ Feature: Synced pattern (wp_block) CRUD commands
   Scenario: Delete multiple patterns including non-existent
     Given a WP install
 
-    When I run `wp block synced-pattern create --title="To Delete" --content='<!-- wp:paragraph --><p>X</p><!-- /wp:paragraph -->' --porcelain`
+    When I run `wp block synced-pattern create --title="To Delete" --content="<!-- wp:paragraph --><p>X</p><!-- /wp:paragraph -->" --porcelain`
     Then save STDOUT as {VALID_ID}
 
     # Trying to delete both valid and invalid IDs
@@ -267,7 +267,7 @@ Feature: Synced pattern (wp_block) CRUD commands
   Scenario: Create synced pattern with malformed content shows warning
     Given a WP install
 
-    When I try `wp block synced-pattern create --title="Malformed Pattern" --content='<!-- wp:paragraph' --porcelain`
+    When I try `wp block synced-pattern create --title="Malformed Pattern" --content="<!-- wp:paragraph" --porcelain`
     Then STDERR should contain:
       """
       Warning: Content does not appear to contain valid blocks.
@@ -278,7 +278,7 @@ Feature: Synced pattern (wp_block) CRUD commands
   @require-wp-5.0
   Scenario: List synced patterns in various formats
     Given a WP install
-    When I run `wp block synced-pattern create --title="Format Test" --content='<!-- wp:paragraph --><p>X</p><!-- /wp:paragraph -->' --porcelain`
+    When I run `wp block synced-pattern create --title="Format Test" --content="<!-- wp:paragraph --><p>X</p><!-- /wp:paragraph -->" --porcelain`
     Then save STDOUT as {PATTERN_ID}
 
     When I run `wp block synced-pattern list --fields=ID --format=table`
