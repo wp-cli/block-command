@@ -4,7 +4,7 @@ Feature: Synced pattern (wp_block) CRUD commands
   Scenario: Create and manage synced patterns
     Given a WP install
 
-    Given a pattern.html file:
+    And a pattern.html file:
       """
       <!-- wp:paragraph --><p>Hello World</p><!-- /wp:paragraph -->
       """
@@ -65,7 +65,7 @@ Feature: Synced pattern (wp_block) CRUD commands
   Scenario: Create unsynced pattern
     Given a WP install
 
-    Given a pattern.html file:
+    And a pattern.html file:
       """
       <!-- wp:paragraph --><p>Test</p><!-- /wp:paragraph -->
       """
@@ -89,7 +89,7 @@ Feature: Synced pattern (wp_block) CRUD commands
   Scenario: Filter by sync status
     Given a WP install
 
-    Given a pattern1.html file:
+    And a pattern1.html file:
       """
       <!-- wp:paragraph --><p>A</p><!-- /wp:paragraph -->
       """
@@ -133,7 +133,7 @@ Feature: Synced pattern (wp_block) CRUD commands
   Scenario: Trash vs permanent delete
     Given a WP install
 
-    Given a pattern.html file:
+    And a pattern.html file:
       """
       <!-- wp:paragraph --><p>X</p><!-- /wp:paragraph -->
       """
@@ -158,7 +158,7 @@ Feature: Synced pattern (wp_block) CRUD commands
   Scenario: Update content and sync status
     Given a WP install
 
-    Given a pattern1.html file:
+    And a pattern1.html file:
       """
       <!-- wp:paragraph --><p>Original</p><!-- /wp:paragraph -->
       """
@@ -206,7 +206,7 @@ Feature: Synced pattern (wp_block) CRUD commands
   Scenario: Create pattern without title fails
     Given a WP install
 
-    Given a pattern.html file:
+    And a pattern.html file:
       """
       <!-- wp:paragraph --><p>No title</p><!-- /wp:paragraph -->
       """
@@ -221,7 +221,7 @@ Feature: Synced pattern (wp_block) CRUD commands
   Scenario: Search patterns by title
     Given a WP install
 
-    Given a pattern1.html file:
+    And a pattern1.html file:
       """
       <!-- wp:paragraph --><p>Alpha</p><!-- /wp:paragraph -->
       """
@@ -267,7 +267,7 @@ Feature: Synced pattern (wp_block) CRUD commands
   Scenario: Delete multiple patterns including non-existent
     Given a WP install
 
-    Given a pattern.html file:
+    And a pattern.html file:
       """
       <!-- wp:paragraph --><p>X</p><!-- /wp:paragraph -->
       """
@@ -311,7 +311,7 @@ Feature: Synced pattern (wp_block) CRUD commands
   Scenario: Create synced pattern with malformed content shows warning
     Given a WP install
 
-    Given a pattern.html file:
+    And a pattern.html file:
       """
       <!-- wp:paragraph
       """
@@ -326,7 +326,7 @@ Feature: Synced pattern (wp_block) CRUD commands
   @require-wp-5.0
   Scenario: List synced patterns in various formats
     Given a WP install
-    Given a pattern.html file:
+    And a pattern.html file:
       """
       <!-- wp:paragraph --><p>X</p><!-- /wp:paragraph -->
       """
