@@ -453,7 +453,9 @@ class Block_Search_Command extends WP_CLI_Command {
 			$flat_blocks[] = $block;
 
 			if ( ! empty( $block['innerBlocks'] ) ) {
-				$flat_blocks = array_merge( $flat_blocks, $this->flatten_blocks( $block['innerBlocks'], $block_pattern_name ) );
+				foreach ( $this->flatten_blocks( $block['innerBlocks'], $block_pattern_name ) as $inner_block ) {
+					$flat_blocks[] = $inner_block;
+				}
 			}
 		}
 
