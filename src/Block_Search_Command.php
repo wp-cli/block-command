@@ -106,6 +106,9 @@ use WP_CLI_Command;
  *     # Show selected fields as JSON for further processing.
  *     $ wp block search --block=core/heading --post_status=publish --fields=ID,post_type,occurrences --format=json
  *
+ *     # Limit the candidate posts scanned with a native query argument.
+ *     $ wp block search --block=core/paragraph --showposts=50 --format=ids
+ *
  *     # Restrict search to specific posts and return the count.
  *     $ wp block search --style=rounded --post__in=21,42,84 --format=count
  *
@@ -187,8 +190,17 @@ class Block_Search_Command extends WP_CLI_Command {
 			$query_args['post_type'] = explode( ',', $query_args['post_type'] );
 		}
 
+		$rough_prefilter = $this->build_rough_post_content_prefilter(
+			$block_name,
+			$block_namespace,
+			$style_name,
+			$pattern_name,
+			$pattern_ns,
+			$synced_pattern
+		);
+
 		$results = [];
-		$query   = new \WP_Query( $query_args );
+		$query   = $this->run_query_with_rough_prefilter( $query_args, $rough_prefilter );
 
 		foreach ( $query->posts as $post ) {
 			if ( ! $post instanceof \WP_Post ) {
@@ -276,6 +288,151 @@ class Block_Search_Command extends WP_CLI_Command {
 		}
 
 		return $assoc_args;
+	}
+
+	/**
+	 * Builds a rough post_content prefilter marker.
+	 *
+	 * The prefilter is advisory only and must never exclude valid matches.
+	 *
+	 * @param string|null $block_name Requested exact block name.
+	 * @param string|null $block_namespace Requested block namespace.
+	 * @param string      $style_name Requested style name.
+	 * @param string|null $pattern_name Requested exact pattern name.
+	 * @param string|null $pattern_namespace Requested pattern namespace.
+	 * @param int|null    $synced_pattern Requested synced pattern post ID.
+	 * @return string[]
+	 */
+	private function build_rough_post_content_prefilter( $block_name, $block_namespace, $style_name, $pattern_name, $pattern_namespace, $synced_pattern ) {
+		$markers = [];
+
+		if ( null !== $block_name && '' !== $block_name ) {
+			$markers[] = '<!-- wp:' . $this->strip_core_block_namespace( $block_name );
+		}
+
+		if ( null !== $block_namespace && '' !== $block_namespace ) {
+			$markers[] = $this->build_block_namespace_prefilter_marker( $block_namespace );
+		}
+
+		if ( '' !== $style_name ) {
+			$markers[] = 'is-style-' . $style_name;
+		}
+
+		if ( null !== $pattern_name && '' !== $pattern_name ) {
+			$markers[] = '"patternName"';
+			$markers[] = $pattern_name;
+		}
+
+		if ( null !== $pattern_namespace && '' !== $pattern_namespace ) {
+			$markers[] = '"patternName"';
+			$markers[] = $pattern_namespace . '/';
+		}
+
+		if ( null !== $synced_pattern ) {
+			$markers[] = '"ref"';
+			$markers[] = (string) $synced_pattern;
+		}
+
+		return array_values( array_unique( $markers ) );
+	}
+
+	/**
+	 * Runs a query with an optional rough post_content prefilter.
+	 *
+	 * @param array    $query_args WP_Query arguments.
+	 * @param string[] $markers Rough prefilter markers.
+	 * @return \WP_Query
+	 */
+	private function run_query_with_rough_prefilter( array $query_args, array $markers ) {
+		if ( [] === $markers ) {
+			return new \WP_Query( $query_args );
+		}
+
+		$query_args['wp_cli_block_search_rough_markers'] = $markers;
+
+		$posts_where = [ $this, 'filter_posts_where_for_rough_post_content_prefilter' ];
+		add_filter( 'posts_where', $posts_where, 10, 2 );
+
+		try {
+			return new \WP_Query( $query_args );
+		} finally {
+			remove_filter( 'posts_where', $posts_where, 10 );
+		}
+	}
+
+	/**
+	 * Applies the rough post_content prefilter to this command's query only.
+	 *
+	 * @param string    $where The WHERE clause.
+	 * @param \WP_Query $query Query instance.
+	 * @return string
+	 */
+	public function filter_posts_where_for_rough_post_content_prefilter( $where, $query ) {
+		global $wpdb;
+
+		$markers = $query->get( 'wp_cli_block_search_rough_markers' );
+
+		if ( ! is_array( $markers ) || [] === $markers ) {
+			return $where;
+		}
+
+		$clauses = [];
+
+		foreach ( $markers as $marker ) {
+			if ( ! is_string( $marker ) || '' === $marker ) {
+				continue;
+			}
+
+			$clauses[] = $wpdb->prepare(
+				"{$wpdb->posts}.post_content LIKE %s",
+				'%' . $wpdb->esc_like( $marker ) . '%'
+			);
+		}
+
+		if ( [] === $clauses ) {
+			return $where;
+		}
+
+		return $where . ' AND ' . implode(
+			' AND ',
+			array_map(
+				static function ( $clause ) {
+					return '(' . $clause . ')';
+				},
+				$clauses
+			)
+		);
+	}
+
+	/**
+	 * Normalizes core block names to their serialized comment marker form.
+	 *
+	 * @param string $block_name Requested exact block name.
+	 * @return string
+	 */
+	private function strip_core_block_namespace( $block_name ) {
+		if ( 0 === strpos( $block_name, 'core/' ) ) {
+			return substr( $block_name, 5 );
+		}
+
+		return $block_name;
+	}
+
+	/**
+	 * Builds a rough serialized comment marker for a block namespace.
+	 *
+	 * Core blocks omit the namespace in serialized comments, so the safest
+	 * coarse marker for core is the generic block comment prefix.
+	 *
+	 * @param string $block_namespace Requested block namespace.
+	 * @return string
+	 */
+	private function build_block_namespace_prefilter_marker( $block_namespace ) {
+		if ( 'core' === $block_namespace ) {
+			return '<!-- wp:';
+		}
+
+		return '<!-- wp:' . $block_namespace . '/';
 	}
 
 	/**

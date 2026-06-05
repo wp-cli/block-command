@@ -52,6 +52,8 @@ wp block search [--block=<block-name>] [--block-namespace=<block-namespace>] [--
 Returns matching posts where the requested block appears anywhere in the
 parsed block tree, including nested blocks.
 
+To reduce unnecessary parsing on large datasets, the command first applies a coarse `post_content` prefilter when a safe marker is available, then confirms matches by parsing blocks.
+
 At least one search filter is required: `--block`, `--block-namespace`, `--style`, `--pattern`, `--pattern-namespace`, or `--synced-pattern`.
 
 Pattern filters match embedded block metadata stored in `metadata.patternName`.
@@ -146,6 +148,9 @@ These fields are optionally available:
 
 	# Limit search to published pages and show selected fields as JSON.
 	$ wp block search --block=core/image --post_type=page --post_status=publish --fields=ID,post_title,occurrences --format=json
+
+	# Limit the candidate posts scanned with a native query argument.
+	$ wp block search --block=core/paragraph --showposts=50 --format=ids
 
 	# Restrict search to specific posts and return the match count.
 	$ wp block search --style=rounded --post__in=21,42,84 --format=count
