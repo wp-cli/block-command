@@ -34,6 +34,21 @@ Feature: Search posts by block usage
       {CORE_NAMESPACE_POST_ID}
       """
 
+  Scenario: Search posts by custom block namespace
+    Given a custom-namespace-post.html file:
+      """
+      <!-- wp:my-plugin/card --><div class="wp-block-my-plugin-card">Hello custom</div><!-- /wp:my-plugin/card -->
+      """
+    When I run `wp post create custom-namespace-post.html --post_type=post --post_title='Custom Namespace Post' --post_status=publish --porcelain`
+    Then STDOUT should be a number
+    And save STDOUT as {CUSTOM_NAMESPACE_POST_ID}
+
+    When I run `wp block search --block-namespace=my-plugin --post_type=post --field=ID`
+    Then STDOUT should be:
+      """
+      {CUSTOM_NAMESPACE_POST_ID}
+      """
+
   Scenario: Search nested block usage
     Given a nested-image-post.html file:
       """
@@ -88,6 +103,17 @@ Feature: Search posts by block usage
     And STDOUT should contain:
       """
       {ROUNDED_QUOTE_POST_ID}
+      """
+
+  Scenario: Style search ignores plain text false positives
+    When I run `wp post create --post_type=post --post_title='Style Token Plain Text Post' --post_status=publish --post_content='This post mentions is-style-rounded in plain text only.' --porcelain`
+    Then STDOUT should be a number
+    And save STDOUT as {STYLE_TOKEN_TEXT_POST_ID}
+
+    When I run `wp block search --style=rounded --field=ID --format=ids`
+    Then STDOUT should not contain:
+      """
+      {STYLE_TOKEN_TEXT_POST_ID}
       """
 
   Scenario: Search block usage count
@@ -156,10 +182,23 @@ Feature: Search posts by block usage
     Then STDOUT should be a number
     And save STDOUT as {PATTERN_HEADER_POST_ID}
 
+    Given a spaced-pattern-rsvp-post.html file:
+      """
+      <!-- wp:group {"metadata":{"categories":["call-to-action"],"patternName": "twentytwentyfive/event-rsvp","name":"Event RSVP Spaced"}} --><div class="wp-block-group"><!-- wp:paragraph --><p>RSVP later</p><!-- /wp:paragraph --></div><!-- /wp:group -->
+      """
+    When I run `wp post create spaced-pattern-rsvp-post.html --post_type=post --post_title='Pattern RSVP Spaced Post' --post_status=publish --porcelain`
+    Then STDOUT should be a number
+    And save STDOUT as {SPACED_PATTERN_RSVP_POST_ID}
+
     When I run `wp block search --pattern=twentytwentyfive/event-rsvp --field=ID`
-    Then STDOUT should be:
+    Then STDOUT should contain:
       """
       {PATTERN_RSVP_POST_ID}
+      """
+
+    And STDOUT should contain:
+      """
+      {SPACED_PATTERN_RSVP_POST_ID}
       """
 
     When I run `wp block search --pattern=twentytwentyfive/event-rsvp --field=ID --format=ids`
@@ -172,6 +211,11 @@ Feature: Search posts by block usage
     Then STDOUT should contain:
       """
       {PATTERN_RSVP_POST_ID}
+      """
+
+    And STDOUT should contain:
+      """
+      {SPACED_PATTERN_RSVP_POST_ID}
       """
 
     And STDOUT should contain:
@@ -242,7 +286,7 @@ Feature: Search posts by block usage
     Then STDOUT should be a number
 
     When I run `wp block search --synced-pattern={SYNCED_PATTERN_ID} --field=ID`
-    Then STDOUT should be:
+    Then STDOUT should contain:
       """
       {SYNCED_PATTERN_POST_ID}
       """
