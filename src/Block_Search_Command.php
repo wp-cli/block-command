@@ -453,9 +453,7 @@ class Block_Search_Command extends WP_CLI_Command {
 			$flat_blocks[] = $block;
 
 			if ( ! empty( $block['innerBlocks'] ) ) {
-				foreach ( $this->flatten_blocks( $block['innerBlocks'], $block_pattern_name ) as $inner_block ) {
-					$flat_blocks[] = $inner_block;
-				}
+				$flat_blocks = array_merge( $flat_blocks, $this->flatten_blocks( $block['innerBlocks'], $block_pattern_name ) );
 			}
 		}
 
@@ -480,10 +478,14 @@ class Block_Search_Command extends WP_CLI_Command {
 			$class_name = $block['attrs']['className'];
 		}
 
-		if ( false !== strpos( $class_name, 'is-style-' . $style_name ) ) {
+		$needle = 'is-style-' . $style_name;
+		if ( 1 === preg_match( '/(^|\\s)' . preg_quote( $needle, '/' ) . '(\\s|$)/', $class_name ) ) {
 			return true;
 		}
 
-		return ! empty( $block['innerHTML'] ) && false !== strpos( $block['innerHTML'], 'is-style-' . $style_name );
+		return ! empty( $block['innerHTML'] ) && 1 === preg_match(
+			"/(^|[\\s\"'])" . preg_quote( $needle, '/' ) . "([\\s\"']|$)/",
+			$block['innerHTML']
+		);
 	}
 }

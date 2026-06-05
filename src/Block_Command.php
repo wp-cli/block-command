@@ -11,7 +11,7 @@ use WP_CLI\Dispatcher\CommandNamespace;
  *
  *     # List all registered block types
  *     $ wp block type list
-
+ *
  *     # Find posts by block usage
  *     $ wp block search --block=core/button
  *
