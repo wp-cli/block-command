@@ -25,7 +25,7 @@ wp block
     $ wp block type list
 
     # Find posts that use a rounded block style
-	$ wp block search --style=rounded
+    $ wp block search --style=rounded
 
     # Get a specific block pattern
     $ wp block pattern get my-theme/hero
