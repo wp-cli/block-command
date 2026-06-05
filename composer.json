@@ -29,6 +29,7 @@
     "bundled": true,
     "commands": [
       "block",
+      "block search",
       "block type",
       "block type exists",
       "block type list",

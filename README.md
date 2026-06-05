@@ -24,6 +24,9 @@ wp block
     # List all registered block types
     $ wp block type list
 
+    # Find posts that use a rounded block style
+	$ wp block search --style=rounded
+
     # Get a specific block pattern
     $ wp block pattern get my-theme/hero
 
@@ -35,6 +38,123 @@ wp block
 
     # Create a synced pattern
     $ wp block synced-pattern create --title="My Pattern" --content='<!-- wp:paragraph --><p>Hello</p><!-- /wp:paragraph -->'
+
+
+
+### wp block search
+
+Searches posts for block usage.
+
+~~~
+wp block search [--block=<block-name>] [--block-namespace=<block-namespace>] [--style=<style-name>] [--pattern=<pattern-name>] [--pattern-namespace=<pattern-namespace>] [--synced-pattern=<post-id>] [--<field>=<value>] [--field=<field>] [--fields=<fields>] [--format=<format>]
+~~~
+
+Returns matching posts where the requested block appears anywhere in the
+parsed block tree, including nested blocks.
+
+At least one search filter is required: `--block`, `--block-namespace`, `--style`, `--pattern`, `--pattern-namespace`, or `--synced-pattern`.
+
+Pattern filters match embedded block metadata stored in `metadata.patternName`.
+
+The `--synced-pattern` filter matches reusable block references by synced pattern post ID.
+
+**OPTIONS**
+
+	[--block=<block-name>]
+		Block type name to search for (for example, 'core/paragraph').
+
+	[--block-namespace=<block-namespace>]
+		Limit matches to blocks within a specific namespace (for example, 'core').
+
+	[--style=<style-name>]
+		Limit matches to blocks using a specific block style.
+
+	[--pattern=<pattern-name>]
+		Limit matches to blocks embedded from a specific pattern (for example, 'twentytwentyfive/event-rsvp').
+
+	[--pattern-namespace=<pattern-namespace>]
+		Limit matches to blocks embedded from patterns within a specific namespace (for example, 'twentytwentyfive').
+
+	[--synced-pattern=<post-id>]
+		Limit matches to reusable block references for a specific synced pattern post ID.
+
+	Note: `--block` and `--block-namespace` are mutually exclusive. `--pattern` and `--pattern-namespace` are also mutually exclusive.
+
+	[--<field>=<value>]
+		One or more args to pass to WP_Query.
+
+	[--field=<field>]
+		Prints the value of a single field for each matching post.
+
+	[--fields=<fields>]
+		Limit the output to specific result fields.
+
+	[--format=<format>]
+		Render output in a particular format.
+		---
+		default: table
+		options:
+		  - table
+		  - csv
+		  - json
+		  - count
+		  - yaml
+		  - ids
+		---
+
+**AVAILABLE FIELDS**
+
+These fields will be displayed by default for each matching post:
+
+* ID
+* post_title
+* post_name
+* post_date
+* post_status
+
+These fields are optionally available:
+
+* post_type
+* url
+* occurrences
+
+**EXAMPLES**
+
+    # Find posts using the paragraph block.
+	$ wp block search --block=core/paragraph
+
+    # Find posts using any block in namespace like 'core'.
+    $ wp block search --block-namespace=core
+
+    # Find posts using any blocks with block style of 'rounded'.
+	$ wp block search --style=rounded
+
+	# Combine namespace and style filters.
+	$ wp block search --block-namespace=core --style=rounded
+
+	# Find posts using blocks embedded from a specific pattern.
+	$ wp block search --pattern=twentytwentyfive/event-rsvp
+
+	# Find posts using blocks embedded from patterns in a specific namespace.
+	$ wp block search --pattern-namespace=twentytwentyfive
+
+	# Find posts using a specific synced pattern.
+	$ wp block search --synced-pattern=123
+
+	# Combine pattern and block filters.
+	$ wp block search --pattern-namespace=twentytwentyfive --block=core/image
+
+	# Limit search to published pages and show selected fields as JSON.
+	$ wp block search --block=core/image --post_type=page --post_status=publish --fields=ID,post_title,occurrences --format=json
+
+	# Restrict search to specific posts and return the match count.
+	$ wp block search --style=rounded --post__in=21,42,84 --format=count
+
+    # Return only matching post IDs.
+	$ wp block search --block=core/paragraph --format=ids
+
+    # Return count of matching posts.
+	$ wp block search --block=core/heading --format=count
 
 
 

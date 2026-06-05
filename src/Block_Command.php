@@ -11,6 +11,9 @@ use WP_CLI\Dispatcher\CommandNamespace;
  *
  *     # List all registered block types
  *     $ wp block type list
+
+ *     # Find posts by block usage
+ *     $ wp block search --block=core/button
  *
  *     # Get a specific block pattern
  *     $ wp block pattern get my-theme/hero
