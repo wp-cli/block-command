@@ -131,17 +131,19 @@ class Block_Search_Command extends WP_CLI_Command {
 		$style_name      = Utils\get_flag_value( $assoc_args, 'style', '' );
 		$pattern_name    = Utils\get_flag_value( $assoc_args, 'pattern', null );
 		$pattern_ns      = Utils\get_flag_value( $assoc_args, 'pattern-namespace', null );
-		$synced_pattern  = Utils\get_flag_value( $assoc_args, 'synced-pattern', null );
+		$synced_pattern  = null;
 
-		if ( null !== $synced_pattern && '' !== $synced_pattern ) {
-			$synced_pattern = (int) $synced_pattern;
+		$synced_pattern_raw = Utils\get_flag_value( $assoc_args, 'synced-pattern', null );
+
+		if ( null !== $synced_pattern_raw && '' !== $synced_pattern_raw ) {
+			$synced_pattern = (int) $synced_pattern_raw;
 
 			if ( $synced_pattern <= 0 ) {
 				WP_CLI::error( 'The --synced-pattern parameter must be a positive integer post ID.' );
 			}
 		}
 
-		if ( ( null === $block_name || '' === $block_name ) && ( null === $block_namespace || '' === $block_namespace ) && '' === $style_name && ( null === $pattern_name || '' === $pattern_name ) && ( null === $pattern_ns || '' === $pattern_ns ) && ( null === $synced_pattern || '' === $synced_pattern ) ) {
+		if ( ( null === $block_name || '' === $block_name ) && ( null === $block_namespace || '' === $block_namespace ) && '' === $style_name && ( null === $pattern_name || '' === $pattern_name ) && ( null === $pattern_ns || '' === $pattern_ns ) && null === $synced_pattern ) {
 			WP_CLI::error( 'At least one block filter is required: --block, --block-namespace, --style, --pattern, --pattern-namespace, or --synced-pattern.' );
 		}
 
@@ -189,6 +191,10 @@ class Block_Search_Command extends WP_CLI_Command {
 		$query   = new \WP_Query( $query_args );
 
 		foreach ( $query->posts as $post ) {
+			if ( ! $post instanceof \WP_Post ) {
+				continue;
+			}
+
 			if ( $this->can_use_has_block_fast_path( $block_name, $block_namespace, $style_name, $pattern_name, $pattern_ns, $synced_pattern ) && ! has_block( $block_name, $post ) ) {
 				continue;
 			}
