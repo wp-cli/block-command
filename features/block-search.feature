@@ -165,6 +165,35 @@ Feature: Search posts by block usage
       [{"ID":{DOUBLE_QUOTE_POST_ID},"occurrences":2}]
       """
 
+  Scenario: Search block usage with WP_Query pagination arguments
+    Given a paged-first-post.html file:
+      """
+      <!-- wp:quote --><blockquote class="wp-block-quote"><p>First paged match</p></blockquote><!-- /wp:quote -->
+      """
+    When I run `wp post create paged-first-post.html --post_type=post --post_title='A Paged Match' --post_status=publish --porcelain`
+    Then STDOUT should be a number
+    And save STDOUT as {PAGED_FIRST_POST_ID}
+
+    Given a paged-second-post.html file:
+      """
+      <!-- wp:quote --><blockquote class="wp-block-quote"><p>Second paged match</p></blockquote><!-- /wp:quote -->
+      """
+    When I run `wp post create paged-second-post.html --post_type=post --post_title='B Paged Match' --post_status=publish --porcelain`
+    Then STDOUT should be a number
+    And save STDOUT as {PAGED_SECOND_POST_ID}
+
+    When I run `wp block search --block=core/quote --post_type=post --orderby=title --order=ASC --posts_per_page=1 --paged=1 --field=ID`
+    Then STDOUT should be:
+      """
+      {PAGED_FIRST_POST_ID}
+      """
+
+    When I run `wp block search --block=core/quote --post_type=post --orderby=title --order=ASC --posts_per_page=1 --paged=2 --field=ID`
+    Then STDOUT should be:
+      """
+      {PAGED_SECOND_POST_ID}
+      """
+
   Scenario: Search blocks embedded from a specific pattern
     Given a pattern-rsvp-post.html file:
       """
