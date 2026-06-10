@@ -85,6 +85,8 @@ The `--synced-pattern` filter matches reusable block references by synced patter
 	[--<field>=<value>]
 		One or more args to pass to WP_Query.
 
+		Use native WP_Query pagination args like `--posts_per_page=<n>` and `--paged=<n>` to scan large sites in smaller batches. These args limit the candidate posts examined for a given run; they do not add pagination metadata to the command output.
+
 	[--field=<field>]
 		Prints the value of a single field for each matching post.
 
@@ -151,6 +153,9 @@ These fields are optionally available:
 
 	# Limit the candidate posts scanned with a native query argument.
 	$ wp block search --block=core/paragraph --showposts=50 --format=ids
+
+	# Scan the second batch of 100 candidate posts without changing output format.
+	$ wp block search --block=core/paragraph --posts_per_page=100 --paged=2 --format=ids
 
 	# Restrict search to specific posts and return the match count.
 	$ wp block search --style=rounded --post__in=21,42,84 --format=count

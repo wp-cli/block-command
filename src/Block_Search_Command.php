@@ -36,6 +36,11 @@ use WP_CLI_Command;
  * [--<field>=<value>]
  * : One or more args to pass to WP_Query.
  *
+ *   Use native WP_Query pagination args `--posts_per_page=<n>` and
+ *   `--paged=<n>` to scan large sites in smaller batches. These args limit the
+ *   candidate posts examined for a given run; they do not add pagination
+ *   metadata to the command output. Results in each page may not be equal and empty response isn't quarantee that next page won't have results.
+ *
  * [--field=<field>]
  * : Prints the value of a single field for each matching post.
  *
@@ -108,6 +113,9 @@ use WP_CLI_Command;
  *
  *     # Limit the candidate posts scanned with a native query argument.
  *     $ wp block search --block=core/paragraph --showposts=50 --format=ids
+ *
+ *     # Scan the second batch of 1000 candidate posts without changing output format.
+ *     $ wp block search --block=core/paragraph --posts_per_page=1000 --paged=2 --format=ids
  *
  *     # Restrict search to specific posts and return the count.
  *     $ wp block search --style=rounded --post__in=21,42,84 --format=count
