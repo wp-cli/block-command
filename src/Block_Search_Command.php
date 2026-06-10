@@ -39,7 +39,7 @@ use WP_CLI_Command;
  *   Use native WP_Query pagination args `--posts_per_page=<n>` and
  *   `--paged=<n>` to scan large sites in smaller batches. These args limit the
  *   candidate posts examined for a given run; they do not add pagination
- *   metadata to the command output. Results in each page may not be equal and empty response isn't quarantee that next page won't have results.
+ *   metadata to the command output. Results in each page may not be equal and empty response isn't guarantee that next page won't have results.
  *
  * [--field=<field>]
  * : Prints the value of a single field for each matching post.
