@@ -64,3 +64,52 @@ parameters:
     -
       message: '#Access to an undefined property WP_Block_Type::#'
       reportUnmatched: false
+    # johnbillion/wp-compat checks every WordPress symbol against the WordPress 4.9
+    # baseline that wp-cli-tests configures. It only recognizes function_exists() and
+    # method_exists() guards, so it cannot see the per-command `before_invoke` checks in
+    # block-command.php, and reports every block API symbol as an error.
+    #
+    # Each entry below matches on the message as well as the identifier, pinning the
+    # version that the corresponding command is gated on, so a call to anything newer
+    # than that gate still gets reported rather than swallowed by a file-wide ignore.
+
+    # `wp block type` is gated on WordPress 5.0.
+    -
+      identifier: WPCompat.methodNotAvailable
+      message: '#^(WP_Block_Type::is_dynamic|WP_Block_Type_Registry::(get_all_registered|get_instance|get_registered|is_registered))\(\) is only available since WordPress version 5\.0\.0\.$#'
+      path: src/Block_Type_Command.php
+
+    # `wp block synced-pattern` is gated on WordPress 5.0.
+    -
+      identifier: WPCompat.functionNotAvailable
+      message: '#^parse_blocks\(\) is only available since WordPress version 5\.0\.0\.$#'
+      path: src/Block_Synced_Pattern_Command.php
+
+    # `wp block style` is gated on WordPress 5.3.
+    -
+      identifier: WPCompat.methodNotAvailable
+      message: '#^WP_Block_Styles_Registry::(get_all_registered|get_instance|get_registered_styles_for_block)\(\) is only available since WordPress version 5\.3\.0\.$#'
+      path: src/Block_Style_Command.php
+
+    # `wp block pattern` and `wp block pattern-category` are gated on WordPress 5.5.
+    -
+      identifier: WPCompat.methodNotAvailable
+      message: '#^WP_Block_Patterns_Registry::(get_all_registered|get_instance|get_registered)\(\) is only available since WordPress version 5\.5\.0\.$#'
+      path: src/Block_Pattern_Command.php
+    -
+      identifier: WPCompat.methodNotAvailable
+      message: '#^WP_Block_Pattern_Categories_Registry::(get_all_registered|get_instance|get_registered)\(\) is only available since WordPress version 5\.5\.0\.$#'
+      path: src/Block_Pattern_Category_Command.php
+
+    # `wp block template` is gated on WordPress 5.9, so the WordPress 5.8 template
+    # functions it calls are comfortably covered.
+    -
+      identifier: WPCompat.functionNotAvailable
+      message: '#^get_block_templates?\(\) is only available since WordPress version 5\.8\.0\.$#'
+      path: src/Block_Template_Command.php
+
+    # `wp block binding` is gated on WordPress 6.5.
+    -
+      identifier: WPCompat.functionNotAvailable
+      message: '#^(get_all_registered_block_bindings_sources|get_block_bindings_source)\(\) is only available since WordPress version 6\.5\.0\.$#'
+      path: src/Block_Binding_Command.php
