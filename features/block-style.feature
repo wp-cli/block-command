@@ -40,12 +40,18 @@ Feature: Block style commands
     And a wp-content/themes/test-theme/functions.php file:
       """
       <?php
-      add_action( 'init', function() {
-          register_block_style( 'core/paragraph', array(
-              'name'  => 'fancy-quote',
-              'label' => 'Fancy Quote',
-          ) );
-      } );
+      add_action(
+          'init',
+          function () {
+              register_block_style(
+                  'core/paragraph',
+                  array(
+                      'name'  => 'fancy-quote',
+                      'label' => 'Fancy Quote',
+                  )
+              );
+          }
+      );
       """
 
     When I run `wp theme activate test-theme`
@@ -122,12 +128,18 @@ Feature: Block style commands
     And a wp-content/themes/format-test-theme/functions.php file:
       """
       <?php
-      add_action( 'init', function() {
-          register_block_style( 'core/paragraph', array(
-              'name'  => 'format-test-style',
-              'label' => 'Format Test Style',
-          ) );
-      } );
+      add_action(
+          'init',
+          function () {
+              register_block_style(
+                  'core/paragraph',
+                  array(
+                      'name'  => 'format-test-style',
+                      'label' => 'Format Test Style',
+                  )
+              );
+          }
+      );
       """
 
     When I run `wp theme activate format-test-theme`
