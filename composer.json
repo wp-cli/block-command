@@ -29,6 +29,8 @@
     "bundled": true,
     "commands": [
       "block",
+      "block convert",
+      "block conversion-support",
       "block type",
       "block type exists",
       "block type list",
