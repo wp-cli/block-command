@@ -54,3 +54,8 @@ WP_CLI::add_command( 'block style', WP_CLI\Block\Block_Style_Command::class, [ '
 WP_CLI::add_command( 'block binding', WP_CLI\Block\Block_Binding_Command::class, [ 'before_invoke' => $wpcli_block_before_invoke_6_5 ] );
 WP_CLI::add_command( 'block template', WP_CLI\Block\Block_Template_Command::class, [ 'before_invoke' => $wpcli_block_before_invoke_5_9 ] );
 WP_CLI::add_command( 'block synced-pattern', WP_CLI\Block\Block_Synced_Pattern_Command::class, [ 'before_invoke' => $wpcli_block_before_invoke_5_0 ] );
+
+// Server-side block conversion, provided by https://github.com/WordPress/gutenberg/pull/82013.
+// The commands check for the conversion functions themselves on top of the version gate.
+WP_CLI::add_command( 'block convert', [ WP_CLI\Block\Block_Conversion_Command::class, 'convert' ], [ 'before_invoke' => $wpcli_block_before_invoke_5_0 ] );
+WP_CLI::add_command( 'block conversion-support', [ WP_CLI\Block\Block_Conversion_Command::class, 'conversion_support' ], [ 'before_invoke' => $wpcli_block_before_invoke_5_0 ] );
