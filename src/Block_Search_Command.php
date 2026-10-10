@@ -388,11 +388,12 @@ class Block_Search_Command extends WP_CLI_Command {
 			$id_query_args['order']   = 'ASC';
 		}
 
-		$ids = array_map(
+		$found = $this->run_query_with_rough_prefilter( $id_query_args, $markers )->posts;
+		$ids   = array_map(
 			static function ( $id ) {
 				return (int) ( $id instanceof \WP_Post ? $id->ID : $id );
 			},
-			$this->run_query_with_rough_prefilter( $id_query_args, $markers )->posts
+			is_array( $found ) ? $found : []
 		);
 
 		foreach ( array_chunk( $ids, self::BATCH_SIZE ) as $batch_ids ) {
@@ -401,7 +402,7 @@ class Block_Search_Command extends WP_CLI_Command {
 					'post__in'               => $batch_ids,
 					'post_type'              => $query_args['post_type'],
 					'post_status'            => $query_args['post_status'],
-					'orderby'                => 'post__in',
+					'orderby'                => 'ID',
 					'posts_per_page'         => count( $batch_ids ),
 					'ignore_sticky_posts'    => true,
 					'no_found_rows'          => true,
@@ -411,9 +412,19 @@ class Block_Search_Command extends WP_CLI_Command {
 				]
 			);
 
-			foreach ( $batch->posts as $post ) {
+			$batch_posts = $batch->posts;
+			$by_id       = [];
+
+			foreach ( is_array( $batch_posts ) ? $batch_posts : [] as $post ) {
 				if ( $post instanceof \WP_Post ) {
-					yield $post;
+					$by_id[ $post->ID ] = $post;
+				}
+			}
+
+			// Restore the order of the ID query in PHP, as ORDER BY FIELD() with 200 IDs fails on some versions of SQLite.
+			foreach ( $batch_ids as $batch_id ) {
+				if ( isset( $by_id[ $batch_id ] ) ) {
+					yield $by_id[ $batch_id ];
 				}
 			}
 		}
