@@ -85,6 +85,12 @@ parameters:
       message: '#^parse_blocks\(\) is only available since WordPress version 5\.0\.0\.$#'
       path: src/Block_Synced_Pattern_Command.php
 
+    # `wp block search` is gated on WordPress 5.0.
+    -
+      identifier: WPCompat.functionNotAvailable
+      message: '#^(has_block|parse_blocks)\(\) is only available since WordPress version 5\.0\.0\.$#'
+      path: src/Block_Search_Command.php
+
     # `wp block style` is gated on WordPress 5.3.
     -
       identifier: WPCompat.methodNotAvailable
