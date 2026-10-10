@@ -10,128 +10,168 @@ use WP_CLI_Command;
 /**
  * Searches posts for block usage.
  *
- * Returns matching posts where the requested block appears anywhere in the
- * parsed block tree, including nested blocks.
- *
- * ## OPTIONS
- *
- * [--block=<block-name>]
- * : Block type name to search for (for example, 'core/paragraph').
- *
- * [--block-namespace=<block-namespace>]
- * : Limit matches to blocks within a specific namespace (for example, 'core').
- *
- * [--style=<style-name>]
- * : Limit matches to blocks using a specific block style.
- *
- * [--pattern=<pattern-name>]
- * : Limit matches to blocks embedded from a specific pattern (for example, 'twentytwentyfive/event-rsvp').
- *
- * [--pattern-namespace=<pattern-namespace>]
- * : Limit matches to blocks embedded from patterns within a specific namespace (for example, 'twentytwentyfive').
- *
- * [--synced-pattern=<post-id>]
- * : Limit matches to reusable block references for a specific synced pattern post ID.
- *
- * [--<field>=<value>]
- * : One or more args to pass to WP_Query.
- *
- *   Use native WP_Query pagination args `--posts_per_page=<n>` and
- *   `--paged=<n>` to scan large sites in smaller batches. These args limit the
- *   candidate posts examined for a given run; they do not add pagination
- *   metadata to the command output. Results in each page may not be equal and empty response isn't guarantee that next page won't have results.
- *
- * [--field=<field>]
- * : Prints the value of a single field for each matching post.
- *
- * [--fields=<fields>]
- * : Limit the output to specific result fields.
- *
- * [--format=<format>]
- * : Render output in a particular format.
- * ---
- * default: table
- * options:
- *   - table
- *   - csv
- *   - json
- *   - count
- *   - yaml
- *   - ids
- * ---
- *
- * ## AVAILABLE FIELDS
- *
- * These fields will be displayed by default for each matching post:
- *
- * * ID
- * * post_title
- * * post_name
- * * post_date
- * * post_status
- *
- * These fields are optionally available:
- *
- * * post_type
- * * url
- * * occurrences
- *
- * ## EXAMPLES
- *
- *     # Find posts using the paragraph block.
- *     $ wp block search --block=core/paragraph
- *
- *     # Find any post type posts using the heading block.
- *     $ wp block search --block=core/heading --post_type=any
- *
- *     # Find posts using any block in namespace like 'core'.
- *     $ wp block search --block-namespace=core
- *
- *     # Find posts using any blocks with block style of 'rounded'.
- *     $ wp block search --style=rounded
- *
- *     # Find posts using certain block with a specific style.
- *     $ wp block search --block=core/image --style=rounded
- *
- *     # Search a namespace with a specific style.
- *     $ wp block search --block-namespace=core --style=rounded
- *
- *     # Search published pages for rounded images.
- *     $ wp block search --block=core/image --style=rounded --post_type=page --post_status=publish
- *
- *     # Find posts using blocks embedded from a specific pattern.
- *     $ wp block search --pattern=twentytwentyfive/event-rsvp
- *
- *     # Find posts using blocks from patterns in a specific namespace.
- *     $ wp block search --pattern-namespace=twentytwentyfive
- *
- *     # Find posts using a specific synced pattern.
- *     $ wp block search --synced-pattern=123
- *
- *     # Show selected fields as JSON for further processing.
- *     $ wp block search --block=core/heading --post_status=publish --fields=ID,post_type,occurrences --format=json
- *
- *     # Limit the candidate posts scanned with a native query argument.
- *     $ wp block search --block=core/paragraph --showposts=50 --format=ids
- *
- *     # Scan the second batch of 1000 candidate posts without changing output format.
- *     $ wp block search --block=core/paragraph --posts_per_page=1000 --paged=2 --format=ids
- *
- *     # Restrict search to specific posts and return the count.
- *     $ wp block search --style=rounded --post__in=21,42,84 --format=count
- *
- *     # Return only matching post IDs.
- *     $ wp block search --block=core/paragraph --format=ids
- *
- *     # Return count of matching posts.
- *     $ wp block search --block=core/heading --format=count
- *
  * @package wp-cli
  */
 class Block_Search_Command extends WP_CLI_Command {
 
 	/**
+	 * Number of candidate posts loaded per batch.
+	 */
+	const BATCH_SIZE = 200;
+
+	/**
+	 * Whether the database supports REGEXP, or null if not yet checked.
+	 *
+	 * @var bool|null
+	 */
+	private $regexp_supported = null;
+
+	/**
 	 * Searches posts for block usage.
+	 *
+	 * Returns matching posts where the requested block appears anywhere in the
+	 * parsed block tree, including nested blocks.
+	 *
+	 * To reduce unnecessary parsing on large datasets, the command first applies a
+	 * coarse `post_content` prefilter when a safe marker is available, then
+	 * confirms matches by parsing blocks. Candidate posts are loaded in batches to
+	 * keep memory usage low. A plain `--block` search skips parsing entirely unless
+	 * the `occurrences` field is requested.
+	 *
+	 * At least one search filter is required: `--block`, `--block-namespace`,
+	 * `--style`, `--pattern`, `--pattern-namespace`, or `--synced-pattern`.
+	 *
+	 * Pattern filters match only blocks whose own `metadata.patternName` matches.
+	 *
+	 * The `--synced-pattern` filter matches reusable block references by synced
+	 * pattern post ID, and cannot be combined with `--block` or `--block-namespace`.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--block=<block-name>]
+	 * : Block type name to search for (for example, 'core/paragraph'). A name without a namespace is treated as a core block.
+	 *
+	 * [--block-namespace=<block-namespace>]
+	 * : Limit matches to blocks within a specific namespace (for example, 'core').
+	 *
+	 * [--style=<style-name>]
+	 * : Limit matches to blocks using a specific block style.
+	 *
+	 * [--pattern=<pattern-name>]
+	 * : Limit matches to blocks embedded from a specific pattern (for example, 'twentytwentyfive/event-rsvp').
+	 *
+	 * [--pattern-namespace=<pattern-namespace>]
+	 * : Limit matches to blocks embedded from patterns within a specific namespace (for example, 'twentytwentyfive').
+	 *
+	 * [--synced-pattern=<post-id>]
+	 * : Limit matches to reusable block references for a specific synced pattern post ID.
+	 *
+	 * [--limit=<limit>]
+	 * : Stop after this many matching posts, in query order (post ID ascending unless
+	 *   `--orderby` is given). Unlike `--posts_per_page`, which limits the candidate
+	 *   posts examined, this counts matches. Cannot be combined with `--paged`.
+	 *
+	 * [--<field>=<value>]
+	 * : One or more args to pass to WP_Query. The default `post_type` is `any`,
+	 *   which excludes `wp_block` and other post types that are not searchable.
+	 *   Pass `--post_type=wp_block` to search them explicitly.
+	 *
+	 *   Results are complete by default; candidate posts are processed in batches
+	 *   internally. Pass `--posts_per_page=<n>` and `--paged=<n>` to search only
+	 *   that window of candidate posts.
+	 *
+	 *   Content inside synced patterns is not searched through `core/block`
+	 *   references, so a block that only exists inside a synced pattern is not
+	 *   found in the posts that use that pattern.
+	 *
+	 * [--field=<field>]
+	 * : Prints the value of a single field for each matching post.
+	 *
+	 * [--fields=<fields>]
+	 * : Limit the output to specific result fields.
+	 *
+	 * [--format=<format>]
+	 * : Render output in a particular format.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - csv
+	 *   - json
+	 *   - count
+	 *   - yaml
+	 *   - ids
+	 * ---
+	 *
+	 * ## AVAILABLE FIELDS
+	 *
+	 * These fields will be displayed by default for each matching post:
+	 *
+	 * * ID
+	 * * post_title
+	 * * post_name
+	 * * post_date
+	 * * post_status
+	 *
+	 * These fields are optionally available:
+	 *
+	 * * post_type
+	 * * url
+	 * * occurrences
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Find posts using the paragraph block.
+	 *     $ wp block search --block=core/paragraph
+	 *
+	 *     # Find any post type posts using the heading block.
+	 *     $ wp block search --block=core/heading --post_type=any
+	 *
+	 *     # Find posts using any block in namespace like 'core'.
+	 *     $ wp block search --block-namespace=core
+	 *
+	 *     # Find posts using any blocks with block style of 'rounded'.
+	 *     $ wp block search --style=rounded
+	 *
+	 *     # Find posts using certain block with a specific style.
+	 *     $ wp block search --block=core/image --style=rounded
+	 *
+	 *     # Search a namespace with a specific style.
+	 *     $ wp block search --block-namespace=core --style=rounded
+	 *
+	 *     # Search published pages for rounded images.
+	 *     $ wp block search --block=core/image --style=rounded --post_type=page --post_status=publish
+	 *
+	 *     # Find posts using blocks embedded from a specific pattern.
+	 *     $ wp block search --pattern=twentytwentyfive/event-rsvp
+	 *
+	 *     # Find posts using blocks from patterns in a specific namespace.
+	 *     $ wp block search --pattern-namespace=twentytwentyfive
+	 *
+	 *     # Find posts using a specific synced pattern.
+	 *     $ wp block search --synced-pattern=123
+	 *
+	 *     # Show selected fields as JSON for further processing.
+	 *     $ wp block search --block=core/heading --post_status=publish --fields=ID,post_type,occurrences --format=json
+	 *
+	 *     # Limit the candidate posts scanned with a native query argument.
+	 *     $ wp block search --block=core/paragraph --showposts=50 --format=ids
+	 *
+	 *     # Search only the second window of 1000 candidate posts.
+	 *     $ wp block search --block=core/paragraph --posts_per_page=1000 --paged=2 --format=ids
+	 *
+	 *     # Restrict search to specific posts and return the count.
+	 *     $ wp block search --style=rounded --post__in=21,42,84 --format=count
+	 *
+	 *     # Return the first 20 posts using the paragraph block.
+	 *     $ wp block search --block=core/paragraph --limit=20 --format=ids
+	 *
+	 *     # Return only matching post IDs.
+	 *     $ wp block search --block=core/paragraph --format=ids
+	 *
+	 *     # Return count of matching posts.
+	 *     $ wp block search --block=core/heading --format=count
+	 *
 	 *
 	 * @param array $args Positional arguments. Unused.
 	 * @param array $assoc_args Associative arguments.
@@ -147,11 +187,26 @@ class Block_Search_Command extends WP_CLI_Command {
 		$synced_pattern_raw = Utils\get_flag_value( $assoc_args, 'synced-pattern', null );
 
 		if ( null !== $synced_pattern_raw && '' !== $synced_pattern_raw ) {
-			$synced_pattern = (int) $synced_pattern_raw;
-
-			if ( $synced_pattern <= 0 ) {
+			if ( ! is_scalar( $synced_pattern_raw ) || 1 !== preg_match( '/^\d+$/', (string) $synced_pattern_raw ) || (int) $synced_pattern_raw <= 0 ) {
 				WP_CLI::error( 'The --synced-pattern parameter must be a positive integer post ID.' );
 			}
+
+			$synced_pattern = (int) $synced_pattern_raw;
+		}
+
+		$limit     = null;
+		$limit_raw = Utils\get_flag_value( $assoc_args, 'limit', null );
+
+		if ( null !== $limit_raw ) {
+			if ( ! is_scalar( $limit_raw ) || 1 !== preg_match( '/^\d+$/', (string) $limit_raw ) || (int) $limit_raw <= 0 ) {
+				WP_CLI::error( 'The --limit parameter must be a positive integer.' );
+			}
+
+			if ( isset( $assoc_args['paged'] ) ) {
+				WP_CLI::error( 'The --limit parameter cannot be combined with --paged.' );
+			}
+
+			$limit = (int) $limit_raw;
 		}
 
 		if ( ( null === $block_name || '' === $block_name ) && ( null === $block_namespace || '' === $block_namespace ) && '' === $style_name && ( null === $pattern_name || '' === $pattern_name ) && ( null === $pattern_ns || '' === $pattern_ns ) && null === $synced_pattern ) {
@@ -166,10 +221,17 @@ class Block_Search_Command extends WP_CLI_Command {
 			WP_CLI::error( 'The --pattern and --pattern-namespace parameters are mutually exclusive.' );
 		}
 
+		if ( null !== $synced_pattern && ( ( null !== $block_name && '' !== $block_name ) || ( null !== $block_namespace && '' !== $block_namespace ) ) ) {
+			WP_CLI::error( 'The --synced-pattern parameter cannot be combined with --block or --block-namespace.' );
+		}
+
+		if ( null !== $block_name && '' !== $block_name && false === strpos( $block_name, '/' ) ) {
+			$block_name = 'core/' . $block_name;
+		}
+
 		$defaults = [
 			'post_type'              => 'any',
 			'post_status'            => 'any',
-			'posts_per_page'         => -1,
 			'no_found_rows'          => true,
 			'cache_results'          => false,
 			'update_post_meta_cache' => false,
@@ -186,6 +248,7 @@ class Block_Search_Command extends WP_CLI_Command {
 			$query_assoc_args['pattern'],
 			$query_assoc_args['pattern-namespace'],
 			$query_assoc_args['synced-pattern'],
+			$query_assoc_args['limit'],
 			$query_assoc_args['field'],
 			$query_assoc_args['fields'],
 			$query_assoc_args['format']
@@ -207,34 +270,50 @@ class Block_Search_Command extends WP_CLI_Command {
 			$synced_pattern
 		);
 
-		$results = [];
-		$query   = $this->run_query_with_rough_prefilter( $query_args, $rough_prefilter );
+		$include_url         = $this->is_field_requested( $assoc_args, 'url' );
+		$include_occurrences = $this->is_field_requested( $assoc_args, 'occurrences' );
+		$use_fast_path       = $this->can_use_has_block_fast_path( $block_name, $block_namespace, $style_name, $pattern_name, $pattern_ns, $synced_pattern );
+		$results             = [];
 
-		foreach ( $query->posts as $post ) {
-			if ( ! $post instanceof \WP_Post ) {
+		foreach ( $this->query_posts_in_batches( $query_args, $rough_prefilter ) as $post ) {
+			$occurrences = null;
+
+			if ( $use_fast_path && ! has_block( $block_name, $post ) ) {
 				continue;
 			}
 
-			if ( $this->can_use_has_block_fast_path( $block_name, $block_namespace, $style_name, $pattern_name, $pattern_ns, $synced_pattern ) && ! has_block( $block_name, $post ) ) {
-				continue;
+			if ( ! $use_fast_path || $include_occurrences ) {
+				$matches = $this->find_matching_blocks( $post->post_content, $block_name, $block_namespace, $style_name, $pattern_name, $pattern_ns, $synced_pattern, ! $include_occurrences );
+
+				if ( empty( $matches ) ) {
+					continue;
+				}
+
+				$occurrences = count( $matches );
 			}
 
-			$matches = $this->find_matching_blocks( $post->post_content, $block_name, $block_namespace, $style_name, $pattern_name, $pattern_ns, $synced_pattern );
-
-			if ( empty( $matches ) ) {
-				continue;
-			}
-
-			$results[] = [
+			$result = [
 				'ID'          => $post->ID,
 				'post_title'  => $post->post_title,
 				'post_name'   => $post->post_name,
 				'post_date'   => $post->post_date,
 				'post_type'   => $post->post_type,
 				'post_status' => $post->post_status,
-				'url'         => get_permalink( $post->ID ),
-				'occurrences' => count( $matches ),
 			];
+
+			if ( $include_url ) {
+				$result['url'] = get_permalink( $post->ID );
+			}
+
+			if ( null !== $occurrences ) {
+				$result['occurrences'] = $occurrences;
+			}
+
+			$results[] = $result;
+
+			if ( null !== $limit && count( $results ) >= $limit ) {
+				break;
+			}
 		}
 
 		$formatter = new Formatter(
@@ -254,6 +333,90 @@ class Block_Search_Command extends WP_CLI_Command {
 		}
 
 		$formatter->display_items( $results );
+	}
+
+	/**
+	 * Checks whether an output field was explicitly requested.
+	 *
+	 * @param array  $assoc_args Associative arguments.
+	 * @param string $field Field name.
+	 * @return bool
+	 */
+	private function is_field_requested( array $assoc_args, $field ) {
+		$requested = [];
+
+		foreach ( [ 'field', 'fields' ] as $key ) {
+			if ( isset( $assoc_args[ $key ] ) && is_string( $assoc_args[ $key ] ) ) {
+				$requested = array_merge( $requested, array_map( 'trim', explode( ',', $assoc_args[ $key ] ) ) );
+			}
+		}
+
+		return in_array( $field, $requested, true );
+	}
+
+	/**
+	 * Yields candidate posts, loading them in batches of IDs.
+	 *
+	 * The prefiltered query only selects IDs. Posts are then loaded in fixed-size
+	 * batches so memory stays flat regardless of how many posts are candidates.
+	 * Explicit pagination args still select exactly that window of IDs.
+	 *
+	 * @param array    $query_args WP_Query arguments.
+	 * @param array<int, string|array<mixed>> $markers Rough prefilter markers.
+	 * @return \Generator<\WP_Post>
+	 */
+	private function query_posts_in_batches( array $query_args, array $markers ) {
+		$id_query_args           = $query_args;
+		$id_query_args['fields'] = 'ids';
+
+		$has_page_size = false;
+
+		foreach ( [ 'posts_per_page', 'showposts', 'nopaging' ] as $key ) {
+			if ( isset( $query_args[ $key ] ) ) {
+				$has_page_size = true;
+				break;
+			}
+		}
+
+		if ( ! $has_page_size && ! isset( $query_args['paged'] ) ) {
+			// -1 would make WP_Query ignore `offset`, so use an effectively unbounded size when one is given.
+			$id_query_args['posts_per_page'] = isset( $query_args['offset'] ) ? PHP_INT_MAX : -1;
+		}
+
+		if ( ! isset( $query_args['orderby'] ) ) {
+			$id_query_args['orderby'] = 'ID';
+			$id_query_args['order']   = 'ASC';
+		}
+
+		$ids = array_map(
+			static function ( $id ) {
+				return (int) ( $id instanceof \WP_Post ? $id->ID : $id );
+			},
+			$this->run_query_with_rough_prefilter( $id_query_args, $markers )->posts
+		);
+
+		foreach ( array_chunk( $ids, self::BATCH_SIZE ) as $batch_ids ) {
+			$batch = new \WP_Query(
+				[
+					'post__in'               => $batch_ids,
+					'post_type'              => $query_args['post_type'],
+					'post_status'            => $query_args['post_status'],
+					'orderby'                => 'post__in',
+					'posts_per_page'         => count( $batch_ids ),
+					'ignore_sticky_posts'    => true,
+					'no_found_rows'          => true,
+					'cache_results'          => false,
+					'update_post_meta_cache' => false,
+					'update_post_term_cache' => false,
+				]
+			);
+
+			foreach ( $batch->posts as $post ) {
+				if ( $post instanceof \WP_Post ) {
+					yield $post;
+				}
+			}
+		}
 	}
 
 	/**
@@ -309,13 +472,18 @@ class Block_Search_Command extends WP_CLI_Command {
 	 * @param string|null $pattern_name Requested exact pattern name.
 	 * @param string|null $pattern_namespace Requested pattern namespace.
 	 * @param int|null    $synced_pattern Requested synced pattern post ID.
-	 * @return string[]
+	 * @return array<int, string|array<mixed>> Markers that must all match; a list entry matches if any alternative does, and a `regexp` entry carries a LIKE `fallback`.
 	 */
 	private function build_rough_post_content_prefilter( $block_name, $block_namespace, $style_name, $pattern_name, $pattern_namespace, $synced_pattern ) {
 		$markers = [];
 
 		if ( null !== $block_name && '' !== $block_name ) {
-			$markers[] = '<!-- wp:' . $this->strip_core_block_namespace( $block_name );
+			$markers[] = $this->alternatives(
+				[
+					'<!-- wp:' . $this->strip_core_block_namespace( $block_name ),
+					'<!-- wp:' . $block_name,
+				]
+			);
 		}
 
 		if ( null !== $block_namespace && '' !== $block_namespace ) {
@@ -323,32 +491,89 @@ class Block_Search_Command extends WP_CLI_Command {
 		}
 
 		if ( '' !== $style_name ) {
-			$markers[] = 'is-style-' . $style_name;
+			$markers[] = $this->alternatives(
+				[
+					'is-style-' . $style_name,
+					'is-style-' . $this->encode_attribute_value( $style_name ),
+				]
+			);
 		}
 
 		if ( null !== $pattern_name && '' !== $pattern_name ) {
 			$markers[] = '"patternName"';
-			$markers[] = $pattern_name;
+			$markers[] = $this->alternatives( [ $pattern_name, $this->encode_attribute_value( $pattern_name ) ] );
 		}
 
 		if ( null !== $pattern_namespace && '' !== $pattern_namespace ) {
 			$markers[] = '"patternName"';
-			$markers[] = $pattern_namespace . '/';
+			$markers[] = $this->alternatives( [ $pattern_namespace . '/', $this->encode_attribute_value( $pattern_namespace . '/' ) ] );
 		}
 
 		if ( null !== $synced_pattern ) {
 			$markers[] = '"ref"';
-			$markers[] = (string) $synced_pattern;
+			$markers[] = [
+				'regexp'   => '"ref"[[:space:]]*:[[:space:]]*' . $synced_pattern . '([^0-9]|$)',
+				'fallback' => [ '"ref":' . $synced_pattern, '"ref": ' . $synced_pattern ],
+			];
 		}
 
-		return array_values( array_unique( $markers ) );
+		return array_values( array_unique( $markers, SORT_REGULAR ) );
+	}
+
+	/**
+	 * Checks whether the database accepts REGEXP, caching the answer.
+	 *
+	 * @return bool
+	 */
+	private function supports_regexp() {
+		global $wpdb;
+
+		if ( null === $this->regexp_supported ) {
+			$suppress               = $wpdb->suppress_errors( true );
+			$result                 = $wpdb->get_var( "SELECT 'a' REGEXP 'a'" );
+			$this->regexp_supported = '1' === (string) $result;
+			$wpdb->suppress_errors( $suppress );
+		}
+
+		return $this->regexp_supported;
+	}
+
+	/**
+	 * Collapses identical alternatives into a single marker.
+	 *
+	 * @param string[] $alternatives Candidate markers, any of which may appear in the content.
+	 * @return string|string[]
+	 */
+	private function alternatives( array $alternatives ) {
+		$alternatives = array_values( array_unique( $alternatives ) );
+
+		return 1 === count( $alternatives ) ? $alternatives[0] : $alternatives;
+	}
+
+	/**
+	 * Encodes a value the way block attributes are escaped when serialized.
+	 *
+	 * @param string $value Raw attribute value.
+	 * @return string
+	 */
+	private function encode_attribute_value( $value ) {
+		$encoded = wp_json_encode( (string) $value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+
+		if ( ! is_string( $encoded ) ) {
+			return (string) $value;
+		}
+
+		$encoded = substr( $encoded, 1, -1 );
+		$encoded = str_replace( [ '--', '<', '>', '&' ], [ '\u002d\u002d', '\u003c', '\u003e', '\u0026' ], $encoded );
+
+		return str_replace( '\\"', '\u0022', $encoded );
 	}
 
 	/**
 	 * Runs a query with an optional rough post_content prefilter.
 	 *
 	 * @param array    $query_args WP_Query arguments.
-	 * @param string[] $markers Rough prefilter markers.
+	 * @param array<int, string|array<mixed>> $markers Rough prefilter markers.
 	 * @return \WP_Query
 	 */
 	private function run_query_with_rough_prefilter( array $query_args, array $markers ) {
@@ -387,14 +612,31 @@ class Block_Search_Command extends WP_CLI_Command {
 		$clauses = [];
 
 		foreach ( $markers as $marker ) {
-			if ( ! is_string( $marker ) || '' === $marker ) {
-				continue;
+			if ( is_array( $marker ) && isset( $marker['regexp'] ) ) {
+				if ( $this->supports_regexp() ) {
+					$clauses[] = $wpdb->prepare( "{$wpdb->posts}.post_content REGEXP %s", $marker['regexp'] );
+					continue;
+				}
+
+				$marker = $marker['fallback'];
 			}
 
-			$clauses[] = $wpdb->prepare(
-				"{$wpdb->posts}.post_content LIKE %s",
-				'%' . $wpdb->esc_like( $marker ) . '%'
-			);
+			$likes = [];
+
+			foreach ( (array) $marker as $alternative ) {
+				if ( ! is_string( $alternative ) || '' === $alternative ) {
+					continue;
+				}
+
+				$likes[] = $wpdb->prepare(
+					"{$wpdb->posts}.post_content LIKE %s",
+					'%' . $wpdb->esc_like( $alternative ) . '%'
+				);
+			}
+
+			if ( [] !== $likes ) {
+				$clauses[] = implode( ' OR ', $likes );
+			}
 		}
 
 		if ( [] === $clauses ) {
@@ -453,13 +695,14 @@ class Block_Search_Command extends WP_CLI_Command {
 	 * @param string|null $pattern_name Requested exact pattern name.
 	 * @param string|null $pattern_namespace Requested pattern namespace.
 	 * @param int|null    $synced_pattern Requested synced pattern post ID.
+	 * @param bool        $first_only Stop at the first match when only existence is needed.
 	 * @return array
 	 */
-	private function find_matching_blocks( $content, $block_name, $block_namespace, $style_name, $pattern_name, $pattern_namespace, $synced_pattern ) {
+	private function find_matching_blocks( $content, $block_name, $block_namespace, $style_name, $pattern_name, $pattern_namespace, $synced_pattern, $first_only = false ) {
 		$blocks  = parse_blocks( $content );
 		$matches = [];
 
-		foreach ( $this->flatten_blocks( $blocks ) as $block ) {
+		foreach ( $this->iterate_blocks( $blocks ) as $block ) {
 			if ( empty( $block['blockName'] ) ) {
 				continue;
 			}
@@ -481,6 +724,10 @@ class Block_Search_Command extends WP_CLI_Command {
 			}
 
 			$matches[] = $block;
+
+			if ( $first_only ) {
+				break;
+			}
 		}
 
 		return $matches;
@@ -540,17 +787,17 @@ class Block_Search_Command extends WP_CLI_Command {
 			return true;
 		}
 
-		$ancestor_pattern_name = $this->get_ancestor_pattern_name( $block );
+		$block_pattern_name = $this->get_block_pattern_name( $block );
 
-		if ( '' === $ancestor_pattern_name ) {
+		if ( '' === $block_pattern_name ) {
 			return false;
 		}
 
 		if ( null !== $pattern_name && '' !== $pattern_name ) {
-			return $ancestor_pattern_name === $pattern_name;
+			return $block_pattern_name === $pattern_name;
 		}
 
-		return 0 === strpos( $ancestor_pattern_name, $pattern_namespace . '/' );
+		return 0 === strpos( $block_pattern_name, $pattern_namespace . '/' );
 	}
 
 	/**
@@ -577,52 +824,33 @@ class Block_Search_Command extends WP_CLI_Command {
 	}
 
 	/**
-	 * Gets the nearest pattern name from the block or its inherited ancestor context.
+	 * Gets the pattern name stored in the block's own metadata.
 	 *
 	 * @param array $block Parsed block.
 	 * @return string
 	 */
-	private function get_ancestor_pattern_name( array $block ) {
+	private function get_block_pattern_name( array $block ) {
 		if ( isset( $block['attrs']['metadata']['patternName'] ) && is_string( $block['attrs']['metadata']['patternName'] ) ) {
 			return $block['attrs']['metadata']['patternName'];
-		}
-
-		if ( isset( $block['ancestorPatternName'] ) && is_string( $block['ancestorPatternName'] ) ) {
-			return $block['ancestorPatternName'];
 		}
 
 		return '';
 	}
 
 	/**
-	 * Flattens nested block arrays.
+	 * Lazily walks nested block arrays depth-first.
 	 *
-	 * @param array  $blocks Parsed blocks.
-	 * @param string $ancestor_pattern_name Pattern name inherited from the nearest parent wrapper.
-	 * @return array
+	 * @param array $blocks Parsed blocks.
+	 * @return \Generator<array>
 	 */
-	private function flatten_blocks( array $blocks, $ancestor_pattern_name = '' ) {
-		$flat_blocks = [];
-
+	private function iterate_blocks( array $blocks ) {
 		foreach ( $blocks as $block ) {
-			$block_pattern_name = $this->get_ancestor_pattern_name( $block );
-
-			if ( '' === $block_pattern_name ) {
-				$block_pattern_name = $ancestor_pattern_name;
-			}
-
-			if ( '' !== $block_pattern_name ) {
-				$block['ancestorPatternName'] = $block_pattern_name;
-			}
-
-			$flat_blocks[] = $block;
+			yield $block;
 
 			if ( ! empty( $block['innerBlocks'] ) ) {
-				$flat_blocks = array_merge( $flat_blocks, $this->flatten_blocks( $block['innerBlocks'], $block_pattern_name ) );
+				yield from $this->iterate_blocks( $block['innerBlocks'] );
 			}
 		}
-
-		return $flat_blocks;
 	}
 
 	/**
