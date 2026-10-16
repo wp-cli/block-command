@@ -24,6 +24,9 @@ wp block
     # List all registered block types
     $ wp block type list
 
+    # Find posts by block usage
+    $ wp block search --block=core/button
+
     # Get a specific block pattern
     $ wp block pattern get my-theme/hero
 
@@ -35,6 +38,159 @@ wp block
 
     # Create a synced pattern
     $ wp block synced-pattern create --title="My Pattern" --content='<!-- wp:paragraph --><p>Hello</p><!-- /wp:paragraph -->'
+
+
+
+### wp block search
+
+Searches posts for block usage.
+
+~~~
+wp block search [--block=<block-name>] [--block-namespace=<block-namespace>] [--style=<style-name>] [--pattern=<pattern-name>] [--pattern-namespace=<pattern-namespace>] [--synced-pattern=<post-id>] [--limit=<limit>] [--<field>=<value>] [--field=<field>] [--fields=<fields>] [--format=<format>]
+~~~
+
+Returns matching posts where the requested block appears anywhere in the
+parsed block tree, including nested blocks.
+
+To reduce unnecessary parsing on large datasets, the command first applies a
+coarse `post_content` prefilter when a safe marker is available, then
+confirms matches by parsing blocks. Candidate posts are loaded in batches to
+keep memory usage low. A plain `--block` search skips parsing entirely unless
+the `occurrences` field is requested.
+
+At least one search filter is required: `--block`, `--block-namespace`,
+`--style`, `--pattern`, `--pattern-namespace`, or `--synced-pattern`.
+
+Pattern filters match only blocks whose own `metadata.patternName` matches.
+
+The `--synced-pattern` filter matches reusable block references by synced
+pattern post ID, and cannot be combined with `--block` or `--block-namespace`.
+
+**OPTIONS**
+
+	[--block=<block-name>]
+		Block type name to search for (for example, 'core/paragraph'). A name without a namespace is treated as a core block.
+
+	[--block-namespace=<block-namespace>]
+		Limit matches to blocks within a specific namespace (for example, 'core').
+
+	[--style=<style-name>]
+		Limit matches to blocks using a specific block style.
+
+	[--pattern=<pattern-name>]
+		Limit matches to blocks embedded from a specific pattern (for example, 'twentytwentyfive/event-rsvp').
+
+	[--pattern-namespace=<pattern-namespace>]
+		Limit matches to blocks embedded from patterns within a specific namespace (for example, 'twentytwentyfive').
+
+	[--synced-pattern=<post-id>]
+		Limit matches to reusable block references for a specific synced pattern post ID.
+
+	[--limit=<limit>]
+		Stop after this many matching posts, in query order (post ID ascending unless
+		  `--orderby` is given). Unlike `--posts_per_page`, which limits the candidate
+		  posts examined, this counts matches. Cannot be combined with `--paged`.
+
+	[--<field>=<value>]
+		One or more args to pass to WP_Query. The default `post_type` is `any`,
+		  which excludes `wp_block` and other post types that are not searchable.
+		  Pass `--post_type=wp_block` to search them explicitly.
+
+		Results are complete by default; candidate posts are processed in batches
+		internally. Pass `--posts_per_page=<n>` and `--paged=<n>` to search only
+		that window of candidate posts.
+
+		Content inside synced patterns is not searched through `core/block`
+		references, so a block that only exists inside a synced pattern is not
+		found in the posts that use that pattern.
+
+	[--field=<field>]
+		Prints the value of a single field for each matching post.
+
+	[--fields=<fields>]
+		Limit the output to specific result fields.
+
+	[--format=<format>]
+		Render output in a particular format.
+		---
+		default: table
+		options:
+		  - table
+		  - csv
+		  - json
+		  - count
+		  - yaml
+		  - ids
+		---
+
+**AVAILABLE FIELDS**
+
+These fields will be displayed by default for each matching post:
+
+* ID
+* post_title
+* post_name
+* post_date
+* post_status
+
+These fields are optionally available:
+
+* post_type
+* url
+* occurrences
+
+**EXAMPLES**
+
+    # Find posts using the paragraph block.
+    $ wp block search --block=core/paragraph
+
+    # Find any post type posts using the heading block.
+    $ wp block search --block=core/heading --post_type=any
+
+    # Find posts using any block in namespace like 'core'.
+    $ wp block search --block-namespace=core
+
+    # Find posts using any blocks with block style of 'rounded'.
+    $ wp block search --style=rounded
+
+    # Find posts using certain block with a specific style.
+    $ wp block search --block=core/image --style=rounded
+
+    # Search a namespace with a specific style.
+    $ wp block search --block-namespace=core --style=rounded
+
+    # Search published pages for rounded images.
+    $ wp block search --block=core/image --style=rounded --post_type=page --post_status=publish
+
+    # Find posts using blocks embedded from a specific pattern.
+    $ wp block search --pattern=twentytwentyfive/event-rsvp
+
+    # Find posts using blocks from patterns in a specific namespace.
+    $ wp block search --pattern-namespace=twentytwentyfive
+
+    # Find posts using a specific synced pattern.
+    $ wp block search --synced-pattern=123
+
+    # Show selected fields as JSON for further processing.
+    $ wp block search --block=core/heading --post_status=publish --fields=ID,post_type,occurrences --format=json
+
+    # Limit the candidate posts scanned with a native query argument.
+    $ wp block search --block=core/paragraph --showposts=50 --format=ids
+
+    # Search only the second window of 1000 candidate posts.
+    $ wp block search --block=core/paragraph --posts_per_page=1000 --paged=2 --format=ids
+
+    # Restrict search to specific posts and return the count.
+    $ wp block search --style=rounded --post__in=21,42,84 --format=count
+
+    # Return the first 20 posts using the paragraph block.
+    $ wp block search --block=core/paragraph --limit=20 --format=ids
+
+    # Return only matching post IDs.
+    $ wp block search --block=core/paragraph --format=ids
+
+    # Return count of matching posts.
+    $ wp block search --block=core/heading --format=count
 
 
 
