@@ -3,7 +3,10 @@ Feature: Block template commands
   @require-wp-5.9
   Scenario: List block templates
     Given a WP install
-    And I try `wp theme install twentytwentyfour --activate`
+    And these installed and active themes:
+      """
+      twentytwentyfour
+      """
 
     When I run `wp block template list --format=count`
     Then STDOUT should be a number
@@ -17,7 +20,10 @@ Feature: Block template commands
   @require-wp-5.9
   Scenario: List template parts
     Given a WP install
-    And I try `wp theme install twentytwentyfour --activate`
+    And these installed and active themes:
+      """
+      twentytwentyfour
+      """
 
     When I run `wp block template list --type=wp_template_part --format=count`
     Then STDOUT should be a number
@@ -28,7 +34,10 @@ Feature: Block template commands
   @require-wp-5.9
   Scenario: Filter templates by source
     Given a WP install
-    And I try `wp theme install twentytwentyfour --activate`
+    And these installed and active themes:
+      """
+      twentytwentyfour
+      """
 
     When I run `wp block template list --source=theme --format=count`
     Then STDOUT should be a number
@@ -36,7 +45,10 @@ Feature: Block template commands
   @require-wp-5.9
   Scenario: Filter templates by slug
     Given a WP install
-    And I try `wp theme install twentytwentyfour --activate`
+    And these installed and active themes:
+      """
+      twentytwentyfour
+      """
 
     # Filter by single slug
     When I run `wp block template list --slug=index --field=slug`
@@ -52,7 +64,10 @@ Feature: Block template commands
   @require-wp-5.9
   Scenario: Filter template parts by area
     Given a WP install
-    And I try `wp theme install twentytwentyfour --activate`
+    And these installed and active themes:
+      """
+      twentytwentyfour
+      """
 
     When I run `wp block template list --type=wp_template_part --area=header --field=slug`
     Then STDOUT should contain:
@@ -63,7 +78,10 @@ Feature: Block template commands
   @require-wp-5.9
   Scenario: Get a block template
     Given a WP install
-    And I try `wp theme install twentytwentyfour --activate`
+    And these installed and active themes:
+      """
+      twentytwentyfour
+      """
 
     # Get the first template ID
     When I run `wp block template list --field=id`
@@ -91,7 +109,10 @@ Feature: Block template commands
   @require-wp-5.9
   Scenario: Export template to stdout
     Given a WP install
-    And I try `wp theme install twentytwentyfour --activate`
+    And these installed and active themes:
+      """
+      twentytwentyfour
+      """
 
     # Get the first template ID using %s pattern to capture first line
     When I run `wp block template list --field=id`
@@ -130,7 +151,10 @@ Feature: Block template commands
   @require-wp-5.9
   Scenario: Export template to file
     Given a WP install
-    And I try `wp theme install twentytwentyfour --activate`
+    And these installed and active themes:
+      """
+      twentytwentyfour
+      """
 
     When I run `wp block template list --field=id`
     Then STDOUT should not be empty
@@ -159,7 +183,10 @@ Feature: Block template commands
   @require-wp-5.9
   Scenario: Filter template parts by invalid area returns empty
     Given a WP install
-    And I try `wp theme install twentytwentyfour --activate`
+    And these installed and active themes:
+      """
+      twentytwentyfour
+      """
 
     When I run `wp block template list --type=wp_template_part --area=nonexistent --format=count`
     Then STDOUT should be:
@@ -170,7 +197,10 @@ Feature: Block template commands
   @require-wp-5.9
   Scenario: Export template creates subdirectories
     Given a WP install
-    And I try `wp theme install twentytwentyfour --activate`
+    And these installed and active themes:
+      """
+      twentytwentyfour
+      """
 
     When I run `wp block template list --field=id`
     Then STDOUT should not be empty
@@ -186,7 +216,10 @@ Feature: Block template commands
   @require-wp-5.9
   Scenario: Export fails when both --file and --dir are provided
     Given a WP install
-    And I try `wp theme install twentytwentyfour --activate`
+    And these installed and active themes:
+      """
+      twentytwentyfour
+      """
 
     When I run `wp block template list --field=id`
     Then STDOUT should not be empty
