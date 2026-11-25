@@ -322,6 +322,25 @@ Feature: Search posts by block usage
       Wide pattern
       """
 
+  Scenario: Synced pattern prefilter without REGEXP support still finds unusual JSON spacing
+    Given a wp-content/mu-plugins/no-regexp.php file:
+      """
+      <?php
+      add_filter(
+        'query',
+        static function ( $query ) {
+          return "SELECT 'a' REGEXP 'a'" === $query ? 'SELECT 0' : $query;
+        }
+      );
+      """
+    And I run `wp eval 'wp_insert_post( [ "post_title" => "Wide ref", "post_status" => "publish", "post_content" => "<!-- wp:block {\"ref\"   :   5151} /-->" ] ); wp_insert_post( [ "post_title" => "Other ref", "post_status" => "publish", "post_content" => "<!-- wp:block {\"ref\":51510} /-->" ] ); echo "done";'`
+
+    When I run `wp block search --synced-pattern=5151 --post_type=post --field=post_title`
+    Then STDOUT should be:
+      """
+      Wide ref
+      """
+
   Scenario: Prefilter finds pattern names with JSON-escaped slashes
     When I run `wp eval 'wp_insert_post( wp_slash( [ "post_title" => "Escaped slash pattern", "post_status" => "publish", "post_content" => "<!-- wp:paragraph {\"metadata\":{\"patternName\":\"my-theme\\/hero\"}} --><p>x</p><!-- /wp:paragraph -->" ] ) ); echo "done";'`
     Then STDOUT should be:

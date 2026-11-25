@@ -524,7 +524,8 @@ class Block_Search_Command extends WP_CLI_Command {
 			$markers[] = '"ref"';
 			$markers[] = [
 				'regexp'   => '"ref"[[:space:]]*:[[:space:]]*' . $synced_pattern . '([^0-9]|$)',
-				'fallback' => [ '"ref":' . $synced_pattern, '"ref": ' . $synced_pattern ],
+				// LIKE cannot allow for arbitrary JSON whitespace, so leave the ID to parsed matching.
+				'fallback' => '"ref"',
 			];
 		}
 
