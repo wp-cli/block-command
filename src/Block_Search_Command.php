@@ -489,10 +489,11 @@ class Block_Search_Command extends WP_CLI_Command {
 		$markers = [];
 
 		if ( null !== $block_name && '' !== $block_name ) {
+			// The parser accepts any whitespace after `<!--`, so the markers start at `wp:`.
 			$markers[] = $this->alternatives(
 				[
-					'<!-- wp:' . $this->strip_core_block_namespace( $block_name ),
-					'<!-- wp:' . $block_name,
+					'wp:' . $this->strip_core_block_namespace( $block_name ),
+					'wp:' . $block_name,
 				]
 			);
 		}
@@ -699,17 +700,18 @@ class Block_Search_Command extends WP_CLI_Command {
 	 * Builds a rough serialized comment marker for a block namespace.
 	 *
 	 * Core blocks omit the namespace in serialized comments, so the safest
-	 * coarse marker for core is the generic block comment prefix.
+	 * coarse marker for core is the generic block comment prefix. Markers start
+	 * at `wp:` because the parser accepts any whitespace after `<!--`.
 	 *
 	 * @param string $block_namespace Requested block namespace.
 	 * @return string
 	 */
 	private function build_block_namespace_prefilter_marker( $block_namespace ) {
 		if ( 'core' === $block_namespace ) {
-			return '<!-- wp:';
+			return 'wp:';
 		}
 
-		return '<!-- wp:' . $block_namespace . '/';
+		return 'wp:' . $block_namespace . '/';
 	}
 
 	/**

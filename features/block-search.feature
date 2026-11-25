@@ -322,6 +322,39 @@ Feature: Search posts by block usage
       Wide pattern
       """
 
+  Scenario: Prefilter finds block comments with extra whitespace after the comment opener
+    Given I run `wp post delete 1 --force`
+
+    When I run `wp eval 'wp_insert_post( [ "post_title" => "Spaced core", "post_status" => "publish", "post_content" => "<!--  wp:paragraph --><p>x</p><!-- /wp:paragraph -->" ] ); wp_insert_post( [ "post_title" => "Spaced custom", "post_status" => "publish", "post_content" => "<!--\twp:my-plugin/spaced /-->" ] ); echo "done";'`
+    Then STDOUT should be:
+      """
+      done
+      """
+
+    When I run `wp block search --block=core/paragraph --post_type=post --field=post_title`
+    Then STDOUT should be:
+      """
+      Spaced core
+      """
+
+    When I run `wp block search --block-namespace=core --post_type=post --field=post_title`
+    Then STDOUT should be:
+      """
+      Spaced core
+      """
+
+    When I run `wp block search --block=my-plugin/spaced --post_type=post --field=post_title`
+    Then STDOUT should be:
+      """
+      Spaced custom
+      """
+
+    When I run `wp block search --block-namespace=my-plugin --post_type=post --field=post_title`
+    Then STDOUT should be:
+      """
+      Spaced custom
+      """
+
   Scenario: Synced pattern prefilter without REGEXP support still finds unusual JSON spacing
     Given a wp-content/mu-plugins/no-regexp.php file:
       """
