@@ -303,7 +303,7 @@ Feature: Search posts by block usage
       """
 
   Scenario: Style names that are escaped when serialized are still found
-    When I run `wp eval 'wp_insert_post( wp_slash( [ "post_title" => "Escaped style", "post_status" => "publish", "post_content" => serialize_block( [ "blockName" => "core/paragraph", "attrs" => [ "className" => "is-style-a&b" ], "innerBlocks" => [], "innerHTML" => "<p class=\"is-style-a&amp;b\">x</p>", "innerContent" => [ "<p class=\"is-style-a&amp;b\">x</p>" ] ] ) ] ) ); echo "done";'`
+    When I run `wp eval 'wp_insert_post( wp_slash( [ "post_title" => "Escaped style", "post_status" => "publish", "post_content" => "<!-- wp:paragraph {\"className\":\"is-style-a\\u0026b\"} --><p class=\"is-style-a&amp;b\">x</p><!-- /wp:paragraph -->" ] ) ); echo "done";'`
     Then STDOUT should be:
       """
       done
