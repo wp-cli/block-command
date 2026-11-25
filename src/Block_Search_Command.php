@@ -936,7 +936,7 @@ class Block_Search_Command extends WP_CLI_Command {
 		}
 
 		foreach ( $class_attributes as $class_attribute ) {
-			$classes = $class_attribute[1] . ( isset( $class_attribute[2] ) ? $class_attribute[2] : '' );
+			$classes = isset( $class_attribute[2] ) ? $class_attribute[2] : ( isset( $class_attribute[1] ) ? $class_attribute[1] : '' );
 
 			if ( 1 === preg_match( '/(^|\s)' . preg_quote( $needle, '/' ) . '(\s|$)/', $classes ) ) {
 				return true;
