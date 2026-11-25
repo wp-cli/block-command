@@ -278,7 +278,7 @@ class Block_Search_Command extends WP_CLI_Command {
 		foreach ( $this->query_posts_in_batches( $query_args, $rough_prefilter ) as $post ) {
 			$occurrences = null;
 
-			if ( $use_fast_path && ! has_block( $block_name, $post ) ) {
+			if ( $use_fast_path && ! $this->has_block_comment( $post->post_content, $block_name ) ) {
 				continue;
 			}
 
@@ -745,7 +745,7 @@ class Block_Search_Command extends WP_CLI_Command {
 	}
 
 	/**
-	 * Checks whether an exact block-only search can use has_block() as a fast precheck.
+	 * Checks whether an exact block-only search can use a block comment check as a fast precheck.
 	 *
 	 * @param string|null $block_name Requested exact block name.
 	 * @param string|null $block_namespace Requested block namespace.
@@ -763,6 +763,27 @@ class Block_Search_Command extends WP_CLI_Command {
 			&& ( null === $pattern_name || '' === $pattern_name )
 			&& ( null === $pattern_namespace || '' === $pattern_namespace )
 			&& null === $synced_pattern;
+	}
+
+	/**
+	 * Checks whether content contains an opening comment for an exact block name.
+	 *
+	 * Unlike has_block(), this accepts the same whitespace as the block parser
+	 * and the serialized form of core block names on every WordPress version.
+	 *
+	 * @param string $content Post content.
+	 * @param string $block_name Requested exact block name.
+	 * @return bool
+	 */
+	private function has_block_comment( $content, $block_name ) {
+		$serialized_name = $this->strip_core_block_namespace( $block_name );
+		$name_pattern    = preg_quote( $serialized_name, '#' );
+
+		if ( $serialized_name !== $block_name ) {
+			$name_pattern = '(?:core/)?' . $name_pattern;
+		}
+
+		return 1 === preg_match( '#<!--\s+wp:' . $name_pattern . '\s#', $content );
 	}
 
 	/**

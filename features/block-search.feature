@@ -239,6 +239,26 @@ Feature: Search posts by block usage
       Exact,1
       """
 
+  Scenario: Block search accepts any whitespace after the block name
+    When I run `wp eval 'wp_insert_post( [ "post_title" => "Newline", "post_status" => "publish", "post_content" => "<!-- wp:my-plugin/card\n/-->" ] ); wp_insert_post( [ "post_title" => "Prefix only", "post_status" => "publish", "post_content" => "<!-- wp:my-plugin/card-extra\n/-->" ] ); echo "done";'`
+    Then STDOUT should be:
+      """
+      done
+      """
+
+    When I run `wp block search --block=my-plugin/card --post_type=post --field=post_title`
+    Then STDOUT should be:
+      """
+      Newline
+      """
+
+    When I run `wp block search --block=my-plugin/card --post_type=post --fields=post_title,occurrences --format=csv`
+    Then STDOUT should be:
+      """
+      post_title,occurrences
+      Newline,1
+      """
+
   Scenario: Offset without a page size skips posts and returns the rest
     When I run `wp eval 'foreach ( [ 1, 2, 3 ] as $i ) { wp_insert_post( [ "post_title" => "Offset $i", "post_status" => "publish", "post_content" => "<!-- wp:my-plugin/offset /-->" ] ); } echo "done";'`
     Then STDOUT should be:
