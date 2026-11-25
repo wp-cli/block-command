@@ -10,6 +10,7 @@ phpcs.xml.dist
 phpunit.xml.dist
 bin/
 features/
+phpstan/
 utils/
 *.zip
 *.tar.gz

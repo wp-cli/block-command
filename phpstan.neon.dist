@@ -7,6 +7,7 @@ parameters:
     - vendor/wp-cli/wp-cli/php
   scanFiles:
     - vendor/php-stubs/wordpress-stubs/wordpress-stubs.php
+    - phpstan/gutenberg-block-conversion-stubs.php
   treatPhpDocTypesAsCertain: false
   ignoreErrors:
     # Standard WP-CLI ignores (same as entity-command)

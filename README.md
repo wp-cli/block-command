@@ -38,6 +38,129 @@ wp block
 
 
 
+### wp block convert
+
+Converts HTML to block markup.
+
+~~~
+wp block convert [<html>] [--file=<file>]
+~~~
+
+Markup that no block claims is kept verbatim inside a Custom HTML block.
+Input that already contains block delimiters is parsed as blocks rather
+than converted again.
+
+The result is printed as-is and is not sanitized. Run it through the
+usual filters, for example by saving it with `wp post update`, before
+storing it as post content.
+
+Requires an active Gutenberg build from
+https://github.com/WordPress/gutenberg/pull/82013.
+
+**OPTIONS**
+
+	[<html>]
+		The HTML to convert. Reads from --file or STDIN when omitted.
+
+	[--file=<file>]
+		Read the HTML from a file instead of the argument.
+
+**EXAMPLES**
+
+    # Convert HTML passed as an argument
+    $ wp block convert '<h2>Title</h2><p>Text</p>'
+    <!-- wp:heading -->
+    <h2 class="wp-block-heading">Title</h2>
+    <!-- /wp:heading -->
+
+    <!-- wp:paragraph -->
+    <p>Text</p>
+    <!-- /wp:paragraph -->
+
+    # Convert the contents of a file
+    $ wp block convert --file=page.html
+
+    # Convert HTML from STDIN
+    $ cat page.html | wp block convert
+
+    # Convert a post's content in place
+    $ wp post get 123 --field=post_content | wp block convert | wp post update 123 -
+
+
+
+### wp block conversion-support
+
+Lists the blocks a server-side conversion can produce.
+
+~~~
+wp block conversion-support [--support=<support>] [--field=<field>] [--fields=<fields>] [--format=<format>]
+~~~
+
+Reports one row per block. The `support` column is one of:
+
+* converts: produced from any markup the block matches.
+* conditional: produced only from markup the block can save back.
+* declines: deliberately not produced by a server-side conversion.
+
+Requires an active Gutenberg build from
+https://github.com/WordPress/gutenberg/pull/82013.
+
+**OPTIONS**
+
+	[--support=<support>]
+		Only list blocks with this level of support.
+		---
+		options:
+		  - converts
+		  - conditional
+		  - declines
+		---
+
+	[--field=<field>]
+		Prints the value of a single field for each block.
+
+	[--fields=<fields>]
+		Limit the output to specific fields.
+
+	[--format=<format>]
+		Render output in a particular format.
+		---
+		default: table
+		options:
+		  - table
+		  - csv
+		  - json
+		  - count
+		  - yaml
+		---
+
+**AVAILABLE FIELDS**
+
+These fields will be displayed by default for each block:
+
+* name
+* support
+
+**EXAMPLES**
+
+    # List what a conversion can produce
+    $ wp block conversion-support
+    +----------------+-------------+
+    | name           | support     |
+    +----------------+-------------+
+    | core/heading   | converts    |
+    | core/paragraph | converts    |
+    | core/table     | declines    |
+    +----------------+-------------+
+
+    # List only the blocks that decline conversion
+    $ wp block conversion-support --support=declines --field=name
+
+    # Get the support map as JSON
+    $ wp block conversion-support --format=json
+
+
+
 ### wp block type
 
 Retrieves details on registered block types.

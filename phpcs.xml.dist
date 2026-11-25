@@ -4,6 +4,8 @@
 
 	<!-- What to scan. -->
 	<file>.</file>
+	<!-- PHPStan stubs for functions provided by other packages. -->
+	<exclude-pattern>*/phpstan/*</exclude-pattern>
 
 	<!-- Show progress. -->
 	<arg value="p"/>
