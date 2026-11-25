@@ -512,12 +512,12 @@ class Block_Search_Command extends WP_CLI_Command {
 
 		if ( null !== $pattern_name && '' !== $pattern_name ) {
 			$markers[] = '"patternName"';
-			$markers[] = $this->alternatives( [ $pattern_name, $this->encode_attribute_value( $pattern_name ) ] );
+			$markers[] = $this->alternatives( $this->pattern_name_alternatives( $pattern_name ) );
 		}
 
 		if ( null !== $pattern_namespace && '' !== $pattern_namespace ) {
 			$markers[] = '"patternName"';
-			$markers[] = $this->alternatives( [ $pattern_namespace . '/', $this->encode_attribute_value( $pattern_namespace . '/' ) ] );
+			$markers[] = $this->alternatives( $this->pattern_name_alternatives( $pattern_namespace . '/' ) );
 		}
 
 		if ( null !== $synced_pattern ) {
@@ -559,6 +559,21 @@ class Block_Search_Command extends WP_CLI_Command {
 		$alternatives = array_values( array_unique( $alternatives ) );
 
 		return 1 === count( $alternatives ) ? $alternatives[0] : $alternatives;
+	}
+
+	/**
+	 * Lists the forms a pattern name can take in serialized block attributes.
+	 *
+	 * Core serializes slashes unescaped, but JSON encoders that escape them
+	 * (`my-theme\/hero`) produce attributes that parse to the same name.
+	 *
+	 * @param string $value Raw pattern name or prefix.
+	 * @return string[]
+	 */
+	private function pattern_name_alternatives( $value ) {
+		$encoded = $this->encode_attribute_value( $value );
+
+		return [ $value, $encoded, str_replace( '/', '\\/', $encoded ) ];
 	}
 
 	/**

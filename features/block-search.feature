@@ -322,6 +322,25 @@ Feature: Search posts by block usage
       Wide pattern
       """
 
+  Scenario: Prefilter finds pattern names with JSON-escaped slashes
+    When I run `wp eval 'wp_insert_post( wp_slash( [ "post_title" => "Escaped slash pattern", "post_status" => "publish", "post_content" => "<!-- wp:paragraph {\"metadata\":{\"patternName\":\"my-theme\\/hero\"}} --><p>x</p><!-- /wp:paragraph -->" ] ) ); echo "done";'`
+    Then STDOUT should be:
+      """
+      done
+      """
+
+    When I run `wp block search --pattern=my-theme/hero --post_type=post --field=post_title`
+    Then STDOUT should be:
+      """
+      Escaped slash pattern
+      """
+
+    When I run `wp block search --pattern-namespace=my-theme --post_type=post --field=post_title`
+    Then STDOUT should be:
+      """
+      Escaped slash pattern
+      """
+
   Scenario: Style names that are escaped when serialized are still found
     When I run `wp eval 'wp_insert_post( wp_slash( [ "post_title" => "Escaped style", "post_status" => "publish", "post_content" => "<!-- wp:paragraph {\"className\":\"is-style-a\\u0026b\"} --><p class=\"is-style-a&amp;b\">x</p><!-- /wp:paragraph -->" ] ) ); echo "done";'`
     Then STDOUT should be:
