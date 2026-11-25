@@ -54,3 +54,4 @@ WP_CLI::add_command( 'block style', WP_CLI\Block\Block_Style_Command::class, [ '
 WP_CLI::add_command( 'block binding', WP_CLI\Block\Block_Binding_Command::class, [ 'before_invoke' => $wpcli_block_before_invoke_6_5 ] );
 WP_CLI::add_command( 'block template', WP_CLI\Block\Block_Template_Command::class, [ 'before_invoke' => $wpcli_block_before_invoke_5_9 ] );
 WP_CLI::add_command( 'block synced-pattern', WP_CLI\Block\Block_Synced_Pattern_Command::class, [ 'before_invoke' => $wpcli_block_before_invoke_5_0 ] );
+WP_CLI::add_command( 'block search', WP_CLI\Block\Block_Search_Command::class, [ 'before_invoke' => $wpcli_block_before_invoke_5_0 ] );
