@@ -108,12 +108,26 @@ Feature: Search posts by block usage
   Scenario: Style search ignores plain text false positives
     When I run `wp post create --post_type=post --post_title='Style Token Plain Text Post' --post_status=publish --post_content='This post mentions is-style-rounded in plain text only.' --porcelain`
     Then STDOUT should be a number
-    And save STDOUT as {STYLE_TOKEN_TEXT_POST_ID}
+
+    Given a style-token-block-text-post.html file:
+      """
+      <!-- wp:paragraph --><p>Use is-style-rounded here.</p><!-- /wp:paragraph -->
+      """
+    When I run `wp post create style-token-block-text-post.html --post_type=post --post_title='Style Token Block Text Post' --post_status=publish --porcelain`
+    Then STDOUT should be a number
+
+    Given a style-class-only-post.html file:
+      """
+      <!-- wp:paragraph --><p class="is-style-rounded">Styled</p><!-- /wp:paragraph -->
+      """
+    When I run `wp post create style-class-only-post.html --post_type=post --post_title='Style Class Only Post' --post_status=publish --porcelain`
+    Then STDOUT should be a number
+    And save STDOUT as {STYLE_CLASS_ONLY_POST_ID}
 
     When I run `wp block search --style=rounded --field=ID --format=ids`
-    Then STDOUT should not contain:
+    Then STDOUT should be:
       """
-      {STYLE_TOKEN_TEXT_POST_ID}
+      {STYLE_CLASS_ONLY_POST_ID}
       """
 
   Scenario: Search block usage count

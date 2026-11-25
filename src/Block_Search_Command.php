@@ -926,9 +926,23 @@ class Block_Search_Command extends WP_CLI_Command {
 			return true;
 		}
 
-		return ! empty( $block['innerHTML'] ) && 1 === preg_match(
-			"/(^|[\\s\"'])" . preg_quote( $needle, '/' ) . "([\\s\"']|$)/",
-			$block['innerHTML']
-		);
+		if ( empty( $block['innerHTML'] ) || ! is_string( $block['innerHTML'] ) ) {
+			return false;
+		}
+
+		// Only class attributes count, not text that happens to mention the class.
+		if ( ! preg_match_all( '/\sclass\s*=\s*(?:"([^"]*)"|\'([^\']*)\')/i', $block['innerHTML'], $class_attributes, PREG_SET_ORDER ) ) {
+			return false;
+		}
+
+		foreach ( $class_attributes as $class_attribute ) {
+			$classes = $class_attribute[1] . ( isset( $class_attribute[2] ) ? $class_attribute[2] : '' );
+
+			if ( 1 === preg_match( '/(^|\s)' . preg_quote( $needle, '/' ) . '(\s|$)/', $classes ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }
